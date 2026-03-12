@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 
 
 export function Navigation() {
-  const { cart, cartCount, cartTotal, removeFromCart } = useCart();
+  const { cart, cartCount, cartTotal, removeFromCart, addToCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
@@ -99,6 +99,60 @@ export function Navigation() {
                   </div>
                 ))
               )}
+              
+              {/* Smart Recommendations */}
+              {cart.length > 0 && (
+                <div className="pt-8 border-t border-foreground/5 space-y-4">
+                  <span className="text-[10px] font-sans uppercase tracking-[0.2em] font-bold text-foreground/30">Complete your gift</span>
+                  <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2">
+                    {cart.some(item => item.id.toString().includes('flower')) ? (
+                      // Suggest Cards if Flowers are in cart
+                      [
+                        { id: 'card-1', name: "Linen Note Card", price: "₹199", image: "https://i.pinimg.com/736x/e4/52/88/e4528881961e8d7eafe425dadb3df1af.jpg" },
+                        { id: 'candle-1', name: "Soy Wax Candle", price: "₹349", image: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg" }
+                      ].map(rec => (
+                        <div key={rec.id} className="flex-shrink-0 w-32 space-y-2 group/rec">
+                          <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface relative">
+                            <Image src={rec.image} alt={rec.name} fill className="object-cover" />
+                            <button 
+                              onClick={() => addToCart({ ...rec, quantity: 1 })}
+                              className="absolute inset-0 bg-secondary/80 flex items-center justify-center opacity-0 group-hover/rec:opacity-100 transition-opacity"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-[10px] font-sans font-bold truncate">{rec.name}</p>
+                            <p className="text-[9px] font-sans text-secondary font-bold">{rec.price}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      // Default trending items if no specific match
+                      [
+                        { id: 'scroll-1', name: "Parchment Scroll", price: "₹899", image: "/images/hero_scroll.png" },
+                        { id: 'flower-1', name: "Velvet Tulip", price: "₹499", image: "/images/velvet_tulip.png" }
+                      ].map(rec => (
+                        <div key={rec.id} className="flex-shrink-0 w-32 space-y-2 group/rec">
+                          <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface relative">
+                            <Image src={rec.image} alt={rec.name} fill className="object-cover" />
+                            <button 
+                              onClick={() => addToCart({ ...rec, quantity: 1 })}
+                              className="absolute inset-0 bg-secondary/80 flex items-center justify-center opacity-0 group-hover/rec:opacity-100 transition-opacity"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-[10px] font-sans font-bold truncate">{rec.name}</p>
+                            <p className="text-[9px] font-sans text-secondary font-bold">{rec.price}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {cart.length > 0 && (
@@ -108,17 +162,18 @@ export function Navigation() {
                   <span className="font-serif text-2xl text-secondary">₹{cartTotal.toLocaleString()}</span>
                 </div>
                 <Link 
-                  href="/order-success"
+                  href="/checkout"
                   onClick={() => setIsCartOpen(false)}
-                  className="block w-full bg-secondary text-white text-center font-sans uppercase tracking-[0.3em] font-bold py-5 rounded-xl hover:bg-secondary/90 transition-all"
+                  className="block w-full bg-secondary text-white text-center font-sans uppercase tracking-[0.3em] font-bold py-5 rounded-xl hover:bg-secondary/90 transition-all shadow-lg shadow-secondary/20"
                 >
-                  Place Order
+                  Proceed to Checkout
                 </Link>
                 <p className="text-[10px] text-center text-foreground/40 font-sans uppercase tracking-widest leading-relaxed">
                   Artisanal delivery estimated in<br/><span className="text-secondary font-bold">10-15 business days</span>
                 </p>
               </footer>
             )}
+
           </div>
         </div>
       )}

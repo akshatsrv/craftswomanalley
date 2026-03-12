@@ -46,5 +46,23 @@ export const products: Record<string, Product> = {
     description: "Chemically aged parchment, hand-scripted with archival pigment ink. Finished with a wooden rod and a physical wax seal from our alley.",
     deliveryTime: "10-15 business days",
     details: "As this is a bespoke handcrafted item, please allow 10-15 business days for delivery."
+  },
+  "card-1": {
+    id: "card-1",
+    name: "Linen Note Card",
+    price: "₹199",
+    image: "https://i.pinimg.com/736x/e4/52/88/e4528881961e8d7eafe425dadb3df1af.jpg",
+    category: "Cards",
+    description: "Hand-pressed linen card for your deepest thoughts.",
+    deliveryTime: "3-5 business days"
+  },
+  "candle-1": {
+    id: "candle-1",
+    name: "Soy Wax Candle",
+    price: "₹349",
+    image: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg",
+    category: "Candles",
+    description: "Lavender scented soy wax candle for a cozy alley.",
+    deliveryTime: "5-7 business days"
   }
 };
