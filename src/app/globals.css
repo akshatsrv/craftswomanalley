@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+:root {
+  --background: #FAF9F6; /* Linen */
+  --foreground: #262626; /* Charcoal Ink */
+  --accent: #A0522D;     /* Deep Terracotta */
+  --secondary: #53A87D; /* Quinn-inspired Green */
+  --surface: #F8EBE3;    /* Soft Blush/Paper */
+  
+  --radius-xl: 1rem;
+}
+
+/* Premium Utility Classes */
+.premium-card {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-secondary: var(--secondary);
+  --color-surface: var(--surface);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+.font-serif {
+  font-family: var(--font-cormorant), serif;
+}
+
+.font-sans {
+  font-family: var(--font-inter), sans-serif;
+}
