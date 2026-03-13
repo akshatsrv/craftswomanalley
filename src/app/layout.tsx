@@ -29,6 +29,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
+      <head>
+        {/* Preload hero and critical above-the-fold images */}
+        <link rel="preload" as="image" href="/images/hero_scroll.png" />
+        <link rel="preload" as="image" href="/images/velvet_tulip.png" />
+        <link rel="preload" as="image" href="/images/scroll_stitched_real.jpg" />
+        {/* Preconnect to external image CDNs for faster DNS + TLS */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://i.pinimg.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://i.pinimg.com" />
+      </head>
       <body className="antialiased font-sans text-foreground bg-background selection:bg-secondary selection:text-white">
         <CartProvider>
           {children}
