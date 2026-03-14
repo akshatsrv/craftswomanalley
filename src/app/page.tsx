@@ -5,8 +5,8 @@ import Link from "next/link";
 
 const categories = [
   { name: "Flowers", img: "/images/velvet_tulip.png", href: "/shop/flowers" },
-  { name: "Scrolls", img: "/images/hero_scroll.png", href: "/shop/scrolls/1" },
-  { name: "Memory Books", img: "/images/memory_book.png", href: "/shop/books/1" },
+  { name: "Scrolls", img: "/images/hero_scroll.png", href: "/shop/scrolls" },
+  { name: "Memory Books", img: "/images/memory_book.png", href: "/shop/books" },
   { name: "Hampers", img: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg", href: "/shop/hampers" },
   { name: "Cards", img: "https://i.pinimg.com/736x/e4/52/88/e4528881961e8d7eafe425dadb3df1af.jpg", href: "/shop/cards" },
   { name: "Candles", img: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg", href: "/shop/candles" },
@@ -44,9 +44,11 @@ export default function Home() {
                 Handcrafted treasures delivered from our alley to your heart.
               </p>
               <div className="flex gap-4">
-                <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-md border-white/40 text-white hover:bg-white hover:text-foreground">
-                  Shop Collection
-                </Button>
+                <Link href="/shop">
+                  <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-md border-white/40 text-white hover:bg-white hover:text-foreground">
+                    Shop Collection
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -100,8 +102,10 @@ export default function Home() {
                   &quot;Physical whispers of love, hand-lettered on chemically aged parchment and finished with a physical wax seal.&quot;
                 </p>
                 <div className="flex gap-4 items-center">
-                  <Button variant="secondary" size="lg">Design Your Scroll</Button>
-                  <Link href="/shop/scrolls/1" className="text-xs font-sans font-bold uppercase tracking-widest border-b border-foreground/20 hover:border-secondary transition-all pb-1">Learn the craft</Link>
+                  <Link href="/shop/scrolls">
+                    <Button variant="secondary" size="lg">Design Your Scroll</Button>
+                  </Link>
+                  <Link href="/contact" className="text-xs font-sans font-bold uppercase tracking-widest border-b border-foreground/20 hover:border-secondary transition-all pb-1">Request Custom</Link>
                 </div>
               </div>
             </div>
@@ -115,8 +119,10 @@ export default function Home() {
                   Hand-bound chronicles for your most cherished moments. Japanese stab stitching meets archival paper for a legacy that lasts.
                 </p>
                 <div className="flex gap-4 items-center">
-                  <Button variant="primary" size="lg">Explore Albums</Button>
-                   <Link href="/shop/books/1" className="text-xs font-sans font-bold uppercase tracking-widest border-b border-foreground/20 hover:border-accent transition-all pb-1">Inside the book</Link>
+                  <Link href="/shop/books">
+                    <Button variant="primary" size="lg">Explore Albums</Button>
+                  </Link>
+                  <Link href="/contact" className="text-xs font-sans font-bold uppercase tracking-widest border-b border-foreground/20 hover:border-accent transition-all pb-1">Commission Yours</Link>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 order-1 lg:order-2">
