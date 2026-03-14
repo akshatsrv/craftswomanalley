@@ -1,11 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
+// ─── Interfaces ──────────────────────────────────────────────────────────────
+
+interface PhotonSuggestion {
+  properties: {
+    name?: string;
+    street?: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+}
 
 // ─── Validation Rules ────────────────────────────────────────────────────────
 
@@ -34,7 +48,7 @@ const validators: Record<string, (value: string) => string | null> = {
   address: (v) => {
     const trimmed = v.trim();
     if (!trimmed) return "Address is required.";
-    if (trimmed.length < 10) return "Please provide a more detailed address.";
+    if (trimmed.length < 5) return "Please provide a more detailed address.";
     return null;
   },
   city: (v) => {
@@ -73,6 +87,7 @@ function FormInput({
   onBlur,
   isPhone = false,
   isLoading = false,
+  children,
 }: {
   label: string;
   field: FormField;
@@ -85,12 +100,13 @@ function FormInput({
   onBlur: (field: FormField) => void;
   isPhone?: boolean;
   isLoading?: boolean;
+  children?: React.ReactNode;
 }) {
   const hasError = touched && error;
   const isValid = touched && !error && value.trim().length > 0;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       <label
         htmlFor={field}
         className="text-[10px] font-sans uppercase tracking-widest font-bold text-foreground/40 flex items-center gap-2"
@@ -121,6 +137,7 @@ function FormInput({
             onChange(field, val);
           }}
           onBlur={() => onBlur(field)}
+          autoComplete="one-time-code"
           className={`w-full bg-background rounded-xl px-5 py-3.5 focus:outline-none transition-all duration-200 pr-10
             ${isPhone ? "pl-[4.5rem]" : "pl-5"}
             border ${
@@ -145,6 +162,7 @@ function FormInput({
           </div>
         )}
       </div>
+      {children}
       <div className={`overflow-hidden transition-all duration-300 ${hasError ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}>
         <p className="text-[11px] text-red-400 font-sans flex items-center gap-1.5 pt-1">
           {error}
@@ -161,7 +179,10 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [addressSuggestions, setAddressSuggestions] = useState<PhotonSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [formData, setFormData] = useState<Record<FormField, string>>({
     name: "",
@@ -181,24 +202,25 @@ export default function CheckoutPage() {
     name: false, email: false, phone: false, address: false, city: false, state: false, pincode: false,
   });
 
-  const handleChange = (field: FormField, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (touched[field]) {
-      setErrors((prev) => ({ ...prev, [field]: validators[field](value) }));
-    }
+  // ─── Free Address Search Integration (Photon OpenStreetMap) ──────────────────
+  const searchAddress = useCallback(
+    async (query: string) => {
+      setIsSearchingAddress(true);
+      try {
+        const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en&lat=22.3511148&lon=78.6677428`);
+        const data = await response.json();
+        const suggestions = (data.features as PhotonSuggestion[]).filter((f) => f.properties.country === "India" || !f.properties.country);
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(suggestions.length > 0);
+      } catch (err) {
+        console.warn("Address search failed", err);
+      } finally {
+        setIsSearchingAddress(false);
+      }
+    },
+    []
+  );
 
-    // Free Resource Feature: Fetch City from Pincode
-    if (field === "pincode" && value.length === 6) {
-      fetchCityFromPincode(value);
-    }
-  };
-
-  const handleBlur = (field: FormField) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
-  };
-
-  // ─── Free Pincode API Integration ──────────────────────────────────────────
   const fetchCityFromPincode = async (pin: string) => {
     setIsFetchingCity(true);
     try {
@@ -217,6 +239,50 @@ export default function CheckoutPage() {
     } finally {
       setIsFetchingCity(false);
     }
+  };
+
+  const handleChange = (field: FormField, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validators[field](value) }));
+    }
+
+    if (field === "pincode" && value.length === 6) {
+      fetchCityFromPincode(value);
+    }
+
+    if (field === "address" && value.length > 3) {
+      searchAddress(value);
+    } else if (field === "address") {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleBlur = (field: FormField) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
+    
+    if (field === "address") {
+      setTimeout(() => setShowSuggestions(false), 200);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
+    const p = suggestion.properties;
+    const streetAddress = [p.name, p.street, p.district].filter(Boolean).join(", ");
+    
+    setFormData(prev => ({
+      ...prev,
+      address: streetAddress,
+      city: p.city || p.district || prev.city,
+      state: p.state || prev.state,
+      pincode: p.postcode || prev.pincode,
+    }));
+
+    setTouched(prev => ({ ...prev, address: true, city: true, state: true, pincode: true }));
+    setErrors(prev => ({ ...prev, address: null, city: null, state: null, pincode: null }));
+    setShowSuggestions(false);
   };
 
   const validateAll = (): boolean => {
@@ -338,13 +404,41 @@ export default function CheckoutPage() {
                 <FormInput
                   label="Street Address"
                   field="address"
-                  placeholder="Flat, Building, Area..."
+                  placeholder="Start typing your address..."
                   value={formData.address}
                   error={errors.address}
                   touched={touched.address}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                />
+                  isLoading={isSearchingAddress}
+                >
+                  {showSuggestions && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-surface border border-foreground/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto premium-shadow">
+                      {addressSuggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(s)}
+                          className="w-full px-5 py-4 text-left hover:bg-foreground/5 transition-colors border-b border-foreground/5 last:border-none flex items-start gap-3"
+                        >
+                          <svg className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <div className="flex flex-col">
+                            <span className="font-serif text-sm text-foreground">
+                              {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                            </span>
+                            <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-widest mt-1">
+                              {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(", ")}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </FormInput>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormInput
                     label="PIN Code"
@@ -380,7 +474,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <p className="text-[10px] font-sans italic text-foreground/30">
-                  Tip: Enter your 6-digit Pincode and we&apos;ll try to fetch your city and state automatically.
+                  Tip: Use the dropdown to auto-fill, or type manually if your address isn&apos;t listed.
                 </p>
               </div>
 
