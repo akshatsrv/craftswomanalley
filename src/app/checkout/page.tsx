@@ -45,10 +45,15 @@ const validators: Record<string, (value: string) => string | null> = {
     if (!/^[6-9]/.test(digits)) return "Please enter a valid Indian mobile number.";
     return null;
   },
-  address: (v) => {
+  houseNumber: (v) => {
     const trimmed = v.trim();
-    if (!trimmed) return "Address is required.";
-    if (trimmed.length < 5) return "Please provide a more detailed address.";
+    if (!trimmed) return "House/Flat number is required.";
+    return null;
+  },
+  streetAddress: (v) => {
+    const trimmed = v.trim();
+    if (!trimmed) return "Street/Area name is required.";
+    if (trimmed.length < 3) return "Please provide a more detailed street/area.";
     return null;
   },
   city: (v) => {
@@ -71,7 +76,7 @@ const validators: Record<string, (value: string) => string | null> = {
   },
 };
 
-type FormField = "name" | "email" | "phone" | "address" | "city" | "state" | "pincode";
+type FormField = "name" | "email" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -188,18 +193,19 @@ export default function CheckoutPage() {
     name: "",
     email: "",
     phone: "",
-    address: "",
+    houseNumber: "",
+    streetAddress: "",
     city: "",
     state: "",
     pincode: "",
   });
 
   const [errors, setErrors] = useState<Record<FormField, string | null>>({
-    name: null, email: null, phone: null, address: null, city: null, state: null, pincode: null,
+    name: null, email: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
   });
 
   const [touched, setTouched] = useState<Record<FormField, boolean>>({
-    name: false, email: false, phone: false, address: false, city: false, state: false, pincode: false,
+    name: false, email: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
   });
 
   // ─── Free Address Search Integration (Photon OpenStreetMap) ──────────────────
@@ -251,9 +257,9 @@ export default function CheckoutPage() {
       fetchCityFromPincode(value);
     }
 
-    if (field === "address" && value.length > 3) {
+    if (field === "streetAddress" && value.length > 3) {
       searchAddress(value);
-    } else if (field === "address") {
+    } else if (field === "streetAddress") {
       setAddressSuggestions([]);
       setShowSuggestions(false);
     }
@@ -263,25 +269,25 @@ export default function CheckoutPage() {
     setTouched((prev) => ({ ...prev, [field]: true }));
     setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
     
-    if (field === "address") {
+    if (field === "streetAddress") {
       setTimeout(() => setShowSuggestions(false), 200);
     }
   };
 
   const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
     const p = suggestion.properties;
-    const streetAddress = [p.name, p.street, p.district].filter(Boolean).join(", ");
+    const street = [p.name, p.street, p.district].filter(Boolean).join(", ");
     
     setFormData(prev => ({
       ...prev,
-      address: streetAddress,
+      streetAddress: street,
       city: p.city || p.district || prev.city,
       state: p.state || prev.state,
       pincode: p.postcode || prev.pincode,
     }));
 
-    setTouched(prev => ({ ...prev, address: true, city: true, state: true, pincode: true }));
-    setErrors(prev => ({ ...prev, address: null, city: null, state: null, pincode: null }));
+    setTouched(prev => ({ ...prev, streetAddress: true, city: true, state: true, pincode: true }));
+    setErrors(prev => ({ ...prev, streetAddress: null, city: null, state: null, pincode: null }));
     setShowSuggestions(false);
   };
 
@@ -290,13 +296,14 @@ export default function CheckoutPage() {
       name: validators.name(formData.name),
       email: validators.email(formData.email),
       phone: validators.phone(formData.phone),
-      address: validators.address(formData.address),
+      houseNumber: validators.houseNumber(formData.houseNumber),
+      streetAddress: validators.streetAddress(formData.streetAddress),
       city: validators.city(formData.city),
       state: validators.state(formData.state),
       pincode: validators.pincode(formData.pincode),
     };
 
-    setTouched({ name: true, email: true, phone: true, address: true, city: true, state: true, pincode: true });
+    setTouched({ name: true, email: true, phone: true, houseNumber: true, streetAddress: true, city: true, state: true, pincode: true });
     setErrors(newErrors);
 
     return Object.values(newErrors).every((e) => e === null);
@@ -310,10 +317,15 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
+      const fullAddress = `${formData.houseNumber}, ${formData.streetAddress}`;
       const response = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: formData, items: cart, total: cartTotal }),
+        body: JSON.stringify({ 
+          customer: { ...formData, address: fullAddress }, 
+          items: cart, 
+          total: cartTotal 
+        }),
       });
 
       if (response.ok) {
@@ -401,43 +413,56 @@ export default function CheckoutPage() {
               {/* Delivery Address */}
               <div className="premium-card bg-surface p-8 md:p-10 border border-foreground/5 space-y-6">
                 <h3 className="font-serif text-2xl border-b border-foreground/5 pb-4 text-foreground/80">Shipping Destination</h3>
-                <FormInput
-                  label="Street Address"
-                  field="address"
-                  placeholder="Start typing your address..."
-                  value={formData.address}
-                  error={errors.address}
-                  touched={touched.address}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  isLoading={isSearchingAddress}
-                >
-                  {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-surface border border-foreground/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto premium-shadow">
-                      {addressSuggestions.map((s, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => handleSelectSuggestion(s)}
-                          className="w-full px-5 py-4 text-left hover:bg-foreground/5 transition-colors border-b border-foreground/5 last:border-none flex items-start gap-3"
-                        >
-                          <svg className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <div className="flex flex-col">
-                            <span className="font-serif text-sm text-foreground">
-                              {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
-                            </span>
-                            <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-widest mt-1">
-                              {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(", ")}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </FormInput>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormInput
+                    label="House / Flat No."
+                    field="houseNumber"
+                    placeholder="E.g. Flat 402, Building A"
+                    value={formData.houseNumber}
+                    error={errors.houseNumber}
+                    touched={touched.houseNumber}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  <FormInput
+                    label="Street / Area Name"
+                    field="streetAddress"
+                    placeholder="Start typing area name..."
+                    value={formData.streetAddress}
+                    error={errors.streetAddress}
+                    touched={touched.streetAddress}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isLoading={isSearchingAddress}
+                  >
+                    {showSuggestions && (
+                      <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-surface border border-foreground/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto premium-shadow">
+                        {addressSuggestions.map((s, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(s)}
+                            className="w-full px-5 py-4 text-left hover:bg-foreground/5 transition-colors border-b border-foreground/5 last:border-none flex items-start gap-3"
+                          >
+                            <svg className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div className="flex flex-col">
+                              <span className="font-serif text-sm text-foreground">
+                                {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                              </span>
+                              <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-widest mt-1">
+                                {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(", ")}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </FormInput>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormInput
@@ -474,7 +499,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <p className="text-[10px] font-sans italic text-foreground/30">
-                  Tip: Use the dropdown to auto-fill, or type manually if your address isn&apos;t listed.
+                  Tip: Use the dropdown on Street Name to auto-fill Area, City, and State!
                 </p>
               </div>
 
