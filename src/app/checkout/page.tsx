@@ -43,6 +43,12 @@ const validators: Record<string, (value: string) => string | null> = {
     if (!/^[a-zA-Z\s]+$/.test(trimmed)) return "City name should only contain letters.";
     return null;
   },
+  state: (v) => {
+    const trimmed = v.trim();
+    if (!trimmed) return "State is required.";
+    if (!/^[a-zA-Z\s]+$/.test(trimmed)) return "State name should only contain letters.";
+    return null;
+  },
   pincode: (v) => {
     const digits = v.replace(/\D/g, "");
     if (!digits) return "Pincode is required.";
@@ -51,7 +57,7 @@ const validators: Record<string, (value: string) => string | null> = {
   },
 };
 
-type FormField = "name" | "email" | "phone" | "address" | "city" | "pincode";
+type FormField = "name" | "email" | "phone" | "address" | "city" | "state" | "pincode";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -163,15 +169,16 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "",
+    state: "",
     pincode: "",
   });
 
   const [errors, setErrors] = useState<Record<FormField, string | null>>({
-    name: null, email: null, phone: null, address: null, city: null, pincode: null,
+    name: null, email: null, phone: null, address: null, city: null, state: null, pincode: null,
   });
 
   const [touched, setTouched] = useState<Record<FormField, boolean>>({
-    name: false, email: false, phone: false, address: false, city: false, pincode: false,
+    name: false, email: false, phone: false, address: false, city: false, state: false, pincode: false,
   });
 
   const handleChange = (field: FormField, value: string) => {
@@ -200,9 +207,10 @@ export default function CheckoutPage() {
       
       if (data[0].Status === "Success" && data[0].PostOffice?.[0]) {
         const city = data[0].PostOffice[0].District;
-        setFormData(prev => ({ ...prev, city }));
-        setErrors(prev => ({ ...prev, city: null }));
-        setTouched(prev => ({ ...prev, city: true }));
+        const state = data[0].PostOffice[0].State;
+        setFormData(prev => ({ ...prev, city, state }));
+        setErrors(prev => ({ ...prev, city: null, state: null }));
+        setTouched(prev => ({ ...prev, city: true, state: true }));
       }
     } catch {
       console.warn("Pincode API failed, falling back to manual entry.");
@@ -218,10 +226,11 @@ export default function CheckoutPage() {
       phone: validators.phone(formData.phone),
       address: validators.address(formData.address),
       city: validators.city(formData.city),
+      state: validators.state(formData.state),
       pincode: validators.pincode(formData.pincode),
     };
 
-    setTouched({ name: true, email: true, phone: true, address: true, city: true, pincode: true });
+    setTouched({ name: true, email: true, phone: true, address: true, city: true, state: true, pincode: true });
     setErrors(newErrors);
 
     return Object.values(newErrors).every((e) => e === null);
@@ -336,7 +345,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormInput
                     label="PIN Code"
                     field="pincode"
@@ -358,9 +367,20 @@ export default function CheckoutPage() {
                     onBlur={handleBlur}
                     isLoading={isFetchingCity}
                   />
+                  <FormInput
+                    label="State"
+                    field="state"
+                    placeholder="Maharashtra"
+                    value={formData.state}
+                    error={errors.state}
+                    touched={touched.state}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isLoading={isFetchingCity}
+                  />
                 </div>
                 <p className="text-[10px] font-sans italic text-foreground/30">
-                  Tip: Enter your 6-digit Pincode and we&apos;ll try to fetch your city automatically.
+                  Tip: Enter your 6-digit Pincode and we&apos;ll try to fetch your city and state automatically.
                 </p>
               </div>
 
