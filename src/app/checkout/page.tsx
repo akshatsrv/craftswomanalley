@@ -89,13 +89,13 @@ function FormInput({
   const hasError = touched && error;
 
   return (
-    <div className="flex flex-col gap-1 min-w-0">
-      <label htmlFor={field} className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-neutral-400">
+    <div className="flex flex-col gap-1.5 min-w-0">
+      <label htmlFor={field} className="text-[11px] font-sans font-extrabold uppercase tracking-[0.12em] text-neutral-500/80">
         {label}
       </label>
-      <div className="relative">
+      <div className="relative group">
         {isPhone && (
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-[13px] pointer-events-none">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-sm pointer-events-none">
             +91
           </span>
         )}
@@ -113,24 +113,24 @@ function FormInput({
           }}
           onBlur={() => onBlur(field)}
           autoComplete="off"
-          className={`w-full bg-white rounded-md py-2 px-3.5 font-sans text-[13px] transition-all border
-            ${isPhone ? "pl-11" : "pl-3.5"}
+          className={`w-full bg-white rounded-lg py-3.5 px-4 font-sans text-[14px] transition-all border
+            ${isPhone ? "pl-12" : "pl-4"}
             ${
               hasError
-                ? "border-red-200 bg-red-50/10 focus:ring-1 focus:ring-red-400 focus:outline-none"
-                : "border-neutral-200 focus:border-accent focus:ring-accent focus:outline-none"
+                ? "border-red-300 bg-red-50/10 focus:ring-1 focus:ring-red-400 focus:outline-none"
+                : "border-neutral-200 focus:border-accent/40 focus:ring-1 focus:ring-accent/10 focus:outline-none"
             }
-            hover:border-neutral-300 placeholder:text-neutral-300`}
+            hover:border-neutral-300 placeholder:text-neutral-300 placeholder:font-light`}
         />
         {isLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <div className="w-3 h-3 border-2 border-neutral-100 border-t-accent rounded-full animate-spin"></div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="w-3.5 h-3.5 border-2 border-neutral-100 border-t-accent rounded-full animate-spin"></div>
           </div>
         )}
       </div>
       {children}
       {hasError && (
-        <p className="text-[9px] text-red-500 font-bold px-0.5 uppercase tracking-tighter">
+        <p className="text-[10px] text-red-500 font-bold px-1 uppercase tracking-tight mt-0.5">
           {error}
         </p>
       )}
@@ -278,7 +278,7 @@ export default function CheckoutPage() {
         clearCart();
         router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}`);
       } else {
-        setSubmitError("Checkout currently unavailable. Please try again.");
+        setSubmitError("Something went wrong. Please try again.");
       }
     } catch {
       setSubmitError("Check your internet connection.");
@@ -290,36 +290,36 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8">
-        <h1 className="font-serif text-2xl mb-2">Cart Empty</h1>
-        <button onClick={() => router.push("/shop")} className="text-accent underline text-xs font-bold uppercase tracking-widest">
-          Return to Treasures
+        <h1 className="font-serif text-3xl mb-4">Your Cart is Empty</h1>
+        <button onClick={() => router.push("/shop")} className="text-accent underline font-sans text-sm uppercase tracking-widest font-bold">
+          Go to Shop
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50/50">
+    <div className="min-h-screen bg-neutral-50/40">
       <Navigation />
 
-      <main className="max-w-[1000px] mx-auto px-6 py-10 md:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <main className="max-w-6xl mx-auto px-6 py-12 md:py-20 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
           
-          {/* Form Column */}
-          <div className="lg:col-span-7 space-y-8">
-            <header>
-              <h1 className="font-serif text-3xl text-neutral-900 tracking-tight">Checkout</h1>
+          {/* Main Column */}
+          <div className="lg:col-span-7 space-y-12">
+            <header className="mb-8">
+              <h1 className="font-serif text-[42px] text-neutral-900 leading-tight">Checkout</h1>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-10">
-              {/* Profile */}
-              <div className="space-y-5">
-                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Personal Information</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-12">
+              {/* Contact */}
+              <div className="space-y-7">
+                <p className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">01. Personal Information</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormInput
                     label="Full Name"
                     field="name"
-                    placeholder="Aarav Sharma"
+                    placeholder="E.g. Aarav Sharma"
                     value={formData.name}
                     error={errors.name}
                     touched={touched.name}
@@ -327,10 +327,10 @@ export default function CheckoutPage() {
                     onBlur={handleBlur}
                   />
                   <FormInput
-                    label="Email"
+                    label="Email Address"
                     field="email"
                     type="email"
-                    placeholder="aarav@example.com"
+                    placeholder="name@example.com"
                     value={formData.email}
                     error={errors.email}
                     touched={touched.email}
@@ -342,7 +342,7 @@ export default function CheckoutPage() {
                       label="Contact Number"
                       field="phone"
                       type="tel"
-                      placeholder="9876543210"
+                      placeholder="XXXXXXXXXX"
                       value={formData.phone}
                       error={errors.phone}
                       touched={touched.phone}
@@ -354,14 +354,14 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Destination */}
-              <div className="space-y-5">
-                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Shipping Destination</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Shipping */}
+              <div className="space-y-7">
+                <p className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">02. Shipping Destination</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormInput
-                    label="House/Flat No."
+                    label="House / Flat No."
                     field="houseNumber"
-                    placeholder="e.g. 102, Block A"
+                    placeholder="E.g. Unit 402"
                     value={formData.houseNumber}
                     error={errors.houseNumber}
                     touched={touched.houseNumber}
@@ -370,9 +370,9 @@ export default function CheckoutPage() {
                   />
                   <div className="relative">
                     <FormInput
-                      label="Street/Area"
+                      label="Street / Area Name"
                       field="streetAddress"
-                      placeholder="Type your locality..."
+                      placeholder="Start typing your area..."
                       value={formData.streetAddress}
                       error={errors.streetAddress}
                       touched={touched.streetAddress}
@@ -381,74 +381,96 @@ export default function CheckoutPage() {
                       isLoading={isSearchingAddress}
                     >
                       {showSuggestions && (
-                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-lg rounded-md mt-1 overflow-hidden">
+                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-xl rounded-lg mt-1 overflow-hidden">
                           {addressSuggestions.map((s, i) => (
                             <button
                               key={i}
                               type="button"
                               onClick={() => handleSelectSuggestion(s)}
-                              className="w-full px-3 py-2.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
+                              className="w-full px-4 py-3.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
                             >
-                              <p className="text-[13px] font-medium text-neutral-800 line-clamp-1">
-                                {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
-                              </p>
-                              <p className="text-[9px] text-neutral-400 uppercase tracking-wide">
-                                {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(" • ")}
-                              </p>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[14px] font-medium text-neutral-800 line-clamp-1">
+                                  {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                                </span>
+                                <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
+                                  {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(" • ")}
+                                </span>
+                              </div>
                             </button>
                           ))}
                         </div>
                       )}
                     </FormInput>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
                     <FormInput
-                      label="Pincode"
+                      label="PIN Code"
                       field="pincode"
-                      placeholder="6 digits"
+                      placeholder="6 Digits"
                       value={formData.pincode}
                       error={errors.pincode}
                       touched={touched.pincode}
                       onChange={handleChange}
                       onBlur={handleBlur}
                     />
-                    <FormInput label="City" field="city" placeholder="City" value={formData.city} error={errors.city} touched={touched.city} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
-                    <FormInput label="State" field="state" placeholder="State" value={formData.state} error={errors.state} touched={touched.state} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
+                    <FormInput 
+                      label="City" 
+                      field="city" 
+                      placeholder="City" 
+                      value={formData.city} 
+                      error={errors.city} 
+                      touched={touched.city} 
+                      onChange={handleChange} 
+                      onBlur={handleBlur}
+                      isLoading={isFetchingCity}
+                    />
+                    <FormInput 
+                      label="State" 
+                      field="state" 
+                      placeholder="State" 
+                      value={formData.state} 
+                      error={errors.state} 
+                      touched={touched.state} 
+                      onChange={handleChange} 
+                      onBlur={handleBlur}
+                      isLoading={isFetchingCity}
+                    />
                   </div>
                 </div>
               </div>
 
-              {submitError && <div className="p-3 text-red-600 bg-red-50 rounded-sm text-[11px] font-bold uppercase tracking-wider text-center">{submitError}</div>}
+              {submitError && <div className="p-4 bg-red-50 text-red-600 rounded-lg text-xs font-bold font-sans tracking-wide text-center uppercase">{submitError}</div>}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-neutral-900 text-white rounded-md py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-50"
+                className="w-full bg-neutral-900 text-white rounded-lg py-5 font-sans font-bold text-[13px] uppercase tracking-[0.3em] hover:bg-neutral-800 transition-all active:scale-[0.985] disabled:opacity-50"
               >
-                {isSubmitting ? "Orchestrating..." : "Complete Order"}
+                {isSubmitting ? "Orchestrating Order..." : "Complete Order"}
               </button>
             </form>
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-24 bg-white border border-neutral-100/50 rounded-xl p-6 md:p-8 space-y-8 shadow-sm">
-              <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Order Summary</p>
+            <div className="lg:sticky lg:top-28 bg-white border border-neutral-100/60 rounded-3xl p-8 md:p-12 space-y-12 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+              <h3 className="font-serif text-[28px] text-neutral-900">Order Summary</h3>
               
-              <div className="space-y-6 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="space-y-9 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex gap-4 items-start pb-6 border-b border-neutral-50 last:border-0 last:pb-0">
-                    <div className="w-14 h-18 relative bg-neutral-50 rounded-md overflow-hidden flex-shrink-0 border border-neutral-100">
+                  <div key={item.id} className="flex gap-6 items-start">
+                    <div className="w-18 h-22 relative bg-neutral-50 rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100/50">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
-                    <div className="flex-grow flex justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-serif text-lg text-neutral-800 leading-none truncate">{item.name}</p>
-                        <p className="text-[9px] font-sans font-black text-neutral-300 uppercase tracking-widest mt-1.5">QTY: {item.quantity}</p>
+                    <div className="flex-grow flex justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <p className="font-serif text-xl text-neutral-800 leading-tight line-clamp-2">{item.name}</p>
+                        <p className="text-[10px] font-sans font-black text-neutral-400 uppercase tracking-[0.2em]">QTY: {item.quantity}</p>
                       </div>
                       <div className="text-right flex flex-col items-end shrink-0">
-                        <span className="font-serif text-[11px] text-neutral-400 leading-none mb-1">₹</span>
-                        <span className="font-serif text-xl text-neutral-900 leading-none tracking-tight">
+                        <span className="font-serif text-[12px] text-neutral-500 leading-none mb-0.5">₹</span>
+                        <span className="font-serif text-2xl text-neutral-900 leading-none">
                           {item.price.toLocaleString()}
                         </span>
                       </div>
@@ -457,20 +479,20 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="space-y-4 pt-1 border-t border-neutral-50">
-                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
-                  <span>Subtotal</span>
-                  <span className="text-neutral-900">₹{cartTotal.toLocaleString()}</span>
+              <div className="space-y-6 pt-9 border-t border-neutral-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">Subtotal</span>
+                  <span className="font-sans font-bold text-neutral-900">₹{cartTotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
-                  <span>Shipping</span>
-                  <span className="text-secondary tracking-widest">Free</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">Shipping</span>
+                  <span className="text-secondary font-sans font-black text-[11px] uppercase tracking-widest border-b-2 border-secondary/10 pb-0.5">Free</span>
                 </div>
-                <div className="flex justify-between items-end pt-6 border-t border-neutral-200">
-                  <span className="font-serif text-2xl text-neutral-800">Total</span>
-                  <div className="flex items-end gap-1 leading-none">
-                    <span className="font-serif text-lg text-neutral-400 mb-0.5">₹</span>
-                    <span className="font-serif text-4xl text-neutral-900 tracking-tighter">
+                <div className="flex justify-between items-end pt-9 border-t border-neutral-100">
+                  <span className="font-serif text-[26px] text-neutral-800">Total</span>
+                  <div className="flex items-end leading-none translate-y-1">
+                    <span className="font-serif text-2xl text-neutral-400 leading-none mb-1 mr-0.5 font-light">₹</span>
+                    <span className="font-serif text-[44px] text-neutral-900 tracking-tighter leading-none">
                       {cartTotal.toLocaleString()}
                     </span>
                   </div>
