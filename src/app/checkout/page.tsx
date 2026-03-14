@@ -27,7 +27,7 @@ const validators: Record<string, (value: string) => string | null> = {
   name: (v) => {
     const trimmed = v.trim();
     if (!trimmed) return "Required";
-    if (trimmed.length < 3) return "Too short";
+    if (trimmed.length < 3) return "Name too short";
     return null;
   },
   email: (v) => {
@@ -43,16 +43,8 @@ const validators: Record<string, (value: string) => string | null> = {
     if (digits.length !== 10) return "Must be 10 digits";
     return null;
   },
-  houseNumber: (v) => {
-    const trimmed = v.trim();
-    if (!trimmed) return "Required";
-    return null;
-  },
-  streetAddress: (v) => {
-    const trimmed = v.trim();
-    if (!trimmed) return "Required";
-    return null;
-  },
+  houseNumber: (v) => (v.trim() ? null : "Required"),
+  streetAddress: (v) => (v.trim() ? null : "Required"),
   city: (v) => (v.trim() ? null : "Required"),
   state: (v) => (v.trim() ? null : "Required"),
   pincode: (v) => {
@@ -97,13 +89,13 @@ function FormInput({
   const hasError = touched && error;
 
   return (
-    <div className="flex flex-col gap-1.5 min-w-0">
-      <label htmlFor={field} className="text-[11px] font-sans font-bold uppercase tracking-wider text-neutral-500">
+    <div className="flex flex-col gap-1 min-w-0">
+      <label htmlFor={field} className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-neutral-400">
         {label}
       </label>
-      <div className="relative group">
+      <div className="relative">
         {isPhone && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-sm pointer-events-none">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-[13px] pointer-events-none">
             +91
           </span>
         )}
@@ -121,24 +113,24 @@ function FormInput({
           }}
           onBlur={() => onBlur(field)}
           autoComplete="off"
-          className={`w-full bg-white rounded-lg py-3 px-4 font-sans text-[14px] transition-all
-            ${isPhone ? "pl-12" : "pl-4"}
+          className={`w-full bg-white rounded-md py-2 px-3.5 font-sans text-[13px] transition-all border
+            ${isPhone ? "pl-11" : "pl-3.5"}
             ${
               hasError
-                ? "border border-red-300 bg-red-50/20 focus:ring-1 focus:ring-red-400 focus:outline-none"
-                : "border border-neutral-200 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                ? "border-red-200 bg-red-50/10 focus:ring-1 focus:ring-red-400 focus:outline-none"
+                : "border-neutral-200 focus:border-accent focus:ring-accent focus:outline-none"
             }
-            hover:border-neutral-300`}
+            hover:border-neutral-300 placeholder:text-neutral-300`}
         />
         {isLoading && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <div className="w-3.5 h-3.5 border-2 border-neutral-200 border-t-accent rounded-full animate-spin"></div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="w-3 h-3 border-2 border-neutral-100 border-t-accent rounded-full animate-spin"></div>
           </div>
         )}
       </div>
       {children}
       {hasError && (
-        <p className="text-[10px] text-red-500 font-medium px-1 uppercase tracking-tight">
+        <p className="text-[9px] text-red-500 font-bold px-0.5 uppercase tracking-tighter">
           {error}
         </p>
       )}
@@ -217,7 +209,7 @@ export default function CheckoutPage() {
       fetchCityFromPincode(value);
     }
     if (field === "streetAddress") {
-      if (value.length > 3) {
+      if (value.length > 2) {
         searchAddress(value);
       } else {
         setAddressSuggestions([]);
@@ -236,7 +228,7 @@ export default function CheckoutPage() {
 
   const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
     const p = suggestion.properties;
-    const street = [p.name, p.street, p.district].filter(Boolean).join(", ");
+    const street = [p.name, p.street].filter(Boolean).join(", ");
     setFormData(prev => ({
       ...prev,
       streetAddress: street,
@@ -286,10 +278,10 @@ export default function CheckoutPage() {
         clearCart();
         router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}`);
       } else {
-        setSubmitError("Checkout currently unavailable. Please try again later.");
+        setSubmitError("Checkout currently unavailable. Please try again.");
       }
     } catch {
-      setSubmitError("Connection error. Please check your internet.");
+      setSubmitError("Check your internet connection.");
     } finally {
       setIsSubmitting(false);
     }
@@ -298,37 +290,36 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8">
-        <h1 className="font-serif text-3xl mb-4">Your Cart is Empty</h1>
-        <button onClick={() => router.push("/shop")} className="text-accent underline font-sans text-sm uppercase tracking-widest font-bold">
-          Go to Shop
+        <h1 className="font-serif text-2xl mb-2">Cart Empty</h1>
+        <button onClick={() => router.push("/shop")} className="text-accent underline text-xs font-bold uppercase tracking-widest">
+          Return to Treasures
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-neutral-50/50">
       <Navigation />
 
-      <main className="max-w-6xl mx-auto px-6 py-12 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+      <main className="max-w-[1000px] mx-auto px-6 py-10 md:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
-          {/* Main Column */}
-          <div className="lg:col-span-7">
-            <div className="mb-10 lg:mb-16">
-              <h1 className="font-serif text-4xl text-neutral-900 mb-2">Checkout</h1>
-              <div className="h-1 w-12 bg-accent rounded-full" />
-            </div>
+          {/* Form Column */}
+          <div className="lg:col-span-7 space-y-8">
+            <header>
+              <h1 className="font-serif text-3xl text-neutral-900 tracking-tight">Checkout</h1>
+            </header>
 
-            <form onSubmit={handleSubmit} className="space-y-12">
-              {/* Contact */}
-              <div className="space-y-6">
-                <h3 className="text-xs font-sans font-black uppercase tracking-[0.2em] text-neutral-400">01. Contact Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <form onSubmit={handleSubmit} className="space-y-10">
+              {/* Profile */}
+              <div className="space-y-5">
+                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Personal Information</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput
                     label="Full Name"
                     field="name"
-                    placeholder="Enter your name"
+                    placeholder="Aarav Sharma"
                     value={formData.name}
                     error={errors.name}
                     touched={touched.name}
@@ -336,10 +327,10 @@ export default function CheckoutPage() {
                     onBlur={handleBlur}
                   />
                   <FormInput
-                    label="Email Address"
+                    label="Email"
                     field="email"
                     type="email"
-                    placeholder="name@provider.com"
+                    placeholder="aarav@example.com"
                     value={formData.email}
                     error={errors.email}
                     touched={touched.email}
@@ -348,10 +339,10 @@ export default function CheckoutPage() {
                   />
                   <div className="md:col-span-2">
                     <FormInput
-                      label="Phone"
+                      label="Contact Number"
                       field="phone"
                       type="tel"
-                      placeholder="XXXXXXXXXX"
+                      placeholder="9876543210"
                       value={formData.phone}
                       error={errors.phone}
                       touched={touched.phone}
@@ -363,14 +354,14 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Shipping */}
-              <div className="space-y-6">
-                <h3 className="text-xs font-sans font-black uppercase tracking-[0.2em] text-neutral-400">02. Shipping Address</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Destination */}
+              <div className="space-y-5">
+                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Shipping Destination</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput
-                    label="House / Flat No."
+                    label="House/Flat No."
                     field="houseNumber"
-                    placeholder="E.g. Unit 402"
+                    placeholder="e.g. 102, Block A"
                     value={formData.houseNumber}
                     error={errors.houseNumber}
                     touched={touched.houseNumber}
@@ -379,9 +370,9 @@ export default function CheckoutPage() {
                   />
                   <div className="relative">
                     <FormInput
-                      label="Street / Area Name"
+                      label="Street/Area"
                       field="streetAddress"
-                      placeholder="Start typing area..."
+                      placeholder="Type your locality..."
                       value={formData.streetAddress}
                       error={errors.streetAddress}
                       touched={touched.streetAddress}
@@ -390,96 +381,74 @@ export default function CheckoutPage() {
                       isLoading={isSearchingAddress}
                     >
                       {showSuggestions && (
-                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-xl rounded-lg mt-1 overflow-hidden">
+                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-lg rounded-md mt-1 overflow-hidden">
                           {addressSuggestions.map((s, i) => (
                             <button
                               key={i}
                               type="button"
                               onClick={() => handleSelectSuggestion(s)}
-                              className="w-full px-4 py-3 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
+                              className="w-full px-3 py-2.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
                             >
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium text-neutral-800">
-                                  {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
-                                </span>
-                                <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                                  {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(", ")}
-                                </span>
-                              </div>
+                              <p className="text-[13px] font-medium text-neutral-800 line-clamp-1">
+                                {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                              </p>
+                              <p className="text-[9px] text-neutral-400 uppercase tracking-wide">
+                                {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(" • ")}
+                              </p>
                             </button>
                           ))}
                         </div>
                       )}
                     </FormInput>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
                     <FormInput
-                      label="PIN Code"
+                      label="Pincode"
                       field="pincode"
-                      placeholder="6 Digits"
+                      placeholder="6 digits"
                       value={formData.pincode}
                       error={errors.pincode}
                       touched={touched.pincode}
                       onChange={handleChange}
                       onBlur={handleBlur}
                     />
-                    <FormInput 
-                      label="City" 
-                      field="city" 
-                      placeholder="City" 
-                      value={formData.city} 
-                      error={errors.city} 
-                      touched={touched.city} 
-                      onChange={handleChange} 
-                      onBlur={handleBlur}
-                      isLoading={isFetchingCity}
-                    />
-                    <FormInput 
-                      label="State" 
-                      field="state" 
-                      placeholder="State" 
-                      value={formData.state} 
-                      error={errors.state} 
-                      touched={touched.state} 
-                      onChange={handleChange} 
-                      onBlur={handleBlur}
-                      isLoading={isFetchingCity}
-                    />
+                    <FormInput label="City" field="city" placeholder="City" value={formData.city} error={errors.city} touched={touched.city} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
+                    <FormInput label="State" field="state" placeholder="State" value={formData.state} error={errors.state} touched={touched.state} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
                   </div>
                 </div>
               </div>
 
-              {submitError && <div className="p-4 bg-red-50 text-red-600 rounded-lg text-xs font-bold font-sans">{submitError}</div>}
+              {submitError && <div className="p-3 text-red-600 bg-red-50 rounded-sm text-[11px] font-bold uppercase tracking-wider text-center">{submitError}</div>}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-neutral-900 text-white rounded-lg py-5 font-sans font-bold text-xs uppercase tracking-[0.3em] hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="w-full bg-neutral-900 text-white rounded-md py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-50"
               >
-                {isSubmitting ? "Processing..." : "Finish Order"}
+                {isSubmitting ? "Orchestrating..." : "Complete Order"}
               </button>
             </form>
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-5 w-full">
-            <div className="lg:sticky lg:top-24 bg-white border border-neutral-100 rounded-3xl p-8 md:p-12 space-y-12 shadow-sm">
-              <h3 className="font-serif text-3xl text-neutral-800">Order Summary</h3>
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-24 bg-white border border-neutral-100/50 rounded-xl p-6 md:p-8 space-y-8 shadow-sm">
+              <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Order Summary</p>
               
-              <div className="space-y-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-6 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex gap-6 items-start">
-                    <div className="w-20 h-24 relative bg-neutral-50 rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100">
+                  <div key={item.id} className="flex gap-4 items-start pb-6 border-b border-neutral-50 last:border-0 last:pb-0">
+                    <div className="w-14 h-18 relative bg-neutral-50 rounded-md overflow-hidden flex-shrink-0 border border-neutral-100">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
-                    <div className="flex-grow flex justify-between gap-4">
-                      <div className="space-y-1">
-                        <p className="font-serif text-xl text-neutral-800 leading-snug">{item.name}</p>
-                        <p className="text-[11px] font-sans font-black text-neutral-400 uppercase tracking-[0.2em]">QTY: {item.quantity}</p>
+                    <div className="flex-grow flex justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-serif text-lg text-neutral-800 leading-none truncate">{item.name}</p>
+                        <p className="text-[9px] font-sans font-black text-neutral-300 uppercase tracking-widest mt-1.5">QTY: {item.quantity}</p>
                       </div>
-                      <div className="text-right flex flex-col items-end">
-                        <span className="font-serif text-sm text-neutral-500">₹</span>
-                        <span className="font-serif text-2xl text-neutral-900 -mt-2">
+                      <div className="text-right flex flex-col items-end shrink-0">
+                        <span className="font-serif text-[11px] text-neutral-400 leading-none mb-1">₹</span>
+                        <span className="font-serif text-xl text-neutral-900 leading-none tracking-tight">
                           {item.price.toLocaleString()}
                         </span>
                       </div>
@@ -488,20 +457,20 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="space-y-6 pt-8 border-t border-neutral-100">
-                <div className="flex justify-between items-center group">
-                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Subtotal</span>
-                  <span className="font-sans font-bold text-neutral-900 tracking-tight">₹{cartTotal.toLocaleString()}</span>
+              <div className="space-y-4 pt-1 border-t border-neutral-50">
+                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
+                  <span>Subtotal</span>
+                  <span className="text-neutral-900">₹{cartTotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center group">
-                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Shipping</span>
-                  <span className="text-secondary font-sans font-black text-[11px] uppercase tracking-widest border-b-2 border-secondary/20 pb-0.5">Free</span>
+                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
+                  <span>Shipping</span>
+                  <span className="text-secondary tracking-widest">Free</span>
                 </div>
-                <div className="flex justify-between items-end pt-8 border-t border-neutral-100">
-                  <span className="font-serif text-3xl text-neutral-800">Total</span>
-                  <div className="flex flex-col items-end leading-none">
-                    <span className="font-serif text-5xl text-neutral-900 tracking-tighter">
-                      <span className="text-2xl mr-1 font-normal opacity-50">₹</span>
+                <div className="flex justify-between items-end pt-6 border-t border-neutral-200">
+                  <span className="font-serif text-2xl text-neutral-800">Total</span>
+                  <div className="flex items-end gap-1 leading-none">
+                    <span className="font-serif text-lg text-neutral-400 mb-0.5">₹</span>
+                    <span className="font-serif text-4xl text-neutral-900 tracking-tighter">
                       {cartTotal.toLocaleString()}
                     </span>
                   </div>
@@ -514,9 +483,9 @@ export default function CheckoutPage() {
 
       <Footer />
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #f0f0f0; border-radius: 10px; }
       `}</style>
     </div>
   );
