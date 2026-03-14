@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Script from "next/script";
-
-// ─── Interfaces & Globals ───────────────────────────────────────────────────
 
 declare global {
   interface Window {
@@ -37,6 +35,46 @@ declare global {
     };
   }
 }
+
+// ─── Style Fix for Google Autocomplete ──────────────────────────────────────
+const GoogleMapStyle = () => (
+  <style jsx global>{`
+    .pac-container {
+      background-color: #fff;
+      z-index: 9999 !important;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.05);
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      margin-top: 4px;
+    }
+    .pac-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      border-top: 1px solid #f9fafb;
+      display: flex;
+      align-items: center;
+    }
+    .pac-item:first-child {
+      border-top: none;
+    }
+    .pac-item:hover {
+      background-color: #f9fafb;
+    }
+    .pac-item-query {
+      font-size: 14px;
+      color: #111827;
+      margin-right: 8px;
+    }
+    .pac-matched {
+      font-weight: 700;
+      color: #6d28d9;
+    }
+    .pac-icon {
+      display: none;
+    }
+  `}</style>
+);
 
 // ─── Validation Rules ────────────────────────────────────────────────────────
 
@@ -230,6 +268,9 @@ export default function CheckoutPage() {
   const initAutocomplete = useCallback(() => {
     if (!streetInputRef.current || !window.google) return;
 
+    // Prevent double initialization
+    if (autocompleteRef.current) return;
+
     autocompleteRef.current = new window.google.maps.places.Autocomplete(streetInputRef.current, {
       componentRestrictions: { country: "in" },
       fields: ["address_components", "formatted_address"],
@@ -244,12 +285,15 @@ export default function CheckoutPage() {
       let state = "";
       let pincode = "";
 
+      // Fallback from formatted address if components are sparse
+      const addressParts = place.formatted_address.split(",");
+      
       for (const component of place.address_components) {
         const componentType = component.types[0];
         switch (componentType) {
           case "sublocality_level_1":
           case "sublocality":
-          case "neighborgood":
+          case "neighborhood":
             street = component.long_name;
             break;
           case "locality":
@@ -266,10 +310,10 @@ export default function CheckoutPage() {
 
       setFormData((prev) => ({
         ...prev,
-        streetAddress: street || place.formatted_address.split(",")[0],
-        city: city || prev.city,
-        state: state || prev.state,
-        pincode: pincode || prev.pincode,
+        streetAddress: street || addressParts[0].trim(),
+        city: city || (addressParts.length > 2 ? addressParts[addressParts.length - 3].trim() : prev.city),
+        state: state || (addressParts.length > 1 ? addressParts[addressParts.length - 2].trim().split(" ")[0] : prev.state),
+        pincode: pincode || (addressParts.length > 1 ? addressParts[addressParts.length - 2].trim().split(" ").pop() || "" : prev.pincode),
       }));
 
       // Mark all auto-filled fields as touched and valid
@@ -277,6 +321,13 @@ export default function CheckoutPage() {
       setErrors((prev) => ({ ...prev, streetAddress: null, city: null, state: null, pincode: null }));
     });
   }, []);
+
+  // Initialize if script already loaded
+  useEffect(() => {
+    if (window.google && !autocompleteRef.current) {
+      initAutocomplete();
+    }
+  }, [initAutocomplete]);
 
   const handleChange = (field: FormField, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -359,6 +410,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen flex flex-col noise-bg">
       <Navigation />
+      <GoogleMapStyle />
       
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
