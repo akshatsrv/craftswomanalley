@@ -1,80 +1,25 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Script from "next/script";
 
-declare global {
-  interface Window {
-    google: {
-      maps: {
-        places: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options?: {
-              componentRestrictions?: { country: string | string[] };
-              fields?: string[];
-            }
-          ) => {
-            addListener: (event: string, handler: () => void) => void;
-            getPlace: () => {
-              address_components?: Array<{
-                long_name: string;
-                short_name: string;
-                types: string[];
-              }>;
-              formatted_address: string;
-            };
-          };
-        };
-      };
-    };
-  }
+// ─── Interfaces ──────────────────────────────────────────────────────────────
+
+interface PhotonSuggestion {
+  properties: {
+    name?: string;
+    street?: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
 }
-
-// ─── Style Fix for Google Autocomplete ──────────────────────────────────────
-const GoogleMapStyle = () => (
-  <style jsx global>{`
-    .pac-container {
-      background-color: #fff;
-      z-index: 9999 !important;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.05);
-      font-family: 'Inter', sans-serif;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      margin-top: 4px;
-    }
-    .pac-item {
-      padding: 12px 20px;
-      cursor: pointer;
-      border-top: 1px solid #f9fafb;
-      display: flex;
-      align-items: center;
-    }
-    .pac-item:first-child {
-      border-top: none;
-    }
-    .pac-item:hover {
-      background-color: #f9fafb;
-    }
-    .pac-item-query {
-      font-size: 14px;
-      color: #111827;
-      margin-right: 8px;
-    }
-    .pac-matched {
-      font-weight: 700;
-      color: #6d28d9;
-    }
-    .pac-icon {
-      display: none;
-    }
-  `}</style>
-);
 
 // ─── Validation Rules ────────────────────────────────────────────────────────
 
@@ -146,7 +91,8 @@ function FormInput({
   onChange,
   onBlur,
   isPhone = false,
-  inputRef,
+  isLoading = false,
+  children,
 }: {
   label: string;
   field: FormField;
@@ -158,7 +104,8 @@ function FormInput({
   onChange: (field: FormField, val: string) => void;
   onBlur: (field: FormField) => void;
   isPhone?: boolean;
-  inputRef?: React.RefObject<HTMLInputElement | null>;
+  isLoading?: boolean;
+  children?: React.ReactNode;
 }) {
   const hasError = touched && error;
   const isValid = touched && !error && value.trim().length > 0;
@@ -184,7 +131,6 @@ function FormInput({
         )}
         <input
           id={field}
-          ref={inputRef}
           type={type}
           placeholder={placeholder}
           value={value}
@@ -196,6 +142,7 @@ function FormInput({
             onChange(field, val);
           }}
           onBlur={() => onBlur(field)}
+          autoComplete="off"
           className={`w-full bg-background rounded-xl px-5 py-3.5 focus:outline-none transition-all duration-200 pr-10
             ${isPhone ? "pl-[4.5rem]" : "pl-5"}
             border ${
@@ -206,7 +153,12 @@ function FormInput({
                 : "border-foreground/5 focus:border-secondary"
             }`}
         />
-        {hasError && (
+        {isLoading && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="w-4 h-4 border-2 border-secondary/20 border-t-secondary rounded-full animate-spin"></div>
+          </div>
+        )}
+        {hasError && !isLoading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" strokeWidth="2" />
@@ -215,6 +167,7 @@ function FormInput({
           </div>
         )}
       </div>
+      {children}
       <div className={`overflow-hidden transition-all duration-300 ${hasError ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}>
         <p className="text-[11px] text-red-400 font-sans flex items-center gap-1.5 pt-1">
           {error}
@@ -230,20 +183,11 @@ export default function CheckoutPage() {
   const { cart, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingCity, setIsFetchingCity] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  
-  const streetInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<{
-    addListener: (event: string, handler: () => void) => void;
-    getPlace: () => {
-      address_components?: Array<{
-        long_name: string;
-        short_name: string;
-        types: string[];
-      }>;
-      formatted_address: string;
-    };
-  } | null>(null);
+  const [addressSuggestions, setAddressSuggestions] = useState<PhotonSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [formData, setFormData] = useState<Record<FormField, string>>({
     name: "",
@@ -264,81 +208,97 @@ export default function CheckoutPage() {
     name: false, email: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
   });
 
-  // ─── Google Maps Integration ───────────────────────────────────────────────
-  const initAutocomplete = useCallback(() => {
-    if (!streetInputRef.current || !window.google) return;
-
-    // Prevent double initialization
-    if (autocompleteRef.current) return;
-
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(streetInputRef.current, {
-      componentRestrictions: { country: "in" },
-      fields: ["address_components", "formatted_address"],
-    });
-
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current?.getPlace();
-      if (!place || !place.address_components) return;
-
-      let street = "";
-      let city = "";
-      let state = "";
-      let pincode = "";
-
-      // Fallback from formatted address if components are sparse
-      const addressParts = place.formatted_address.split(",");
-      
-      for (const component of place.address_components) {
-        const componentType = component.types[0];
-        switch (componentType) {
-          case "sublocality_level_1":
-          case "sublocality":
-          case "neighborhood":
-            street = component.long_name;
-            break;
-          case "locality":
-            city = component.long_name;
-            break;
-          case "administrative_area_level_1":
-            state = component.long_name;
-            break;
-          case "postal_code":
-            pincode = component.long_name;
-            break;
-        }
+  // ─── Free Address Search Integration (Photon OpenStreetMap) ──────────────────
+  const searchAddress = useCallback(
+    async (query: string) => {
+      if (query.length < 3) return;
+      setIsSearchingAddress(true);
+      try {
+        // Photon is open-source, free, and uses OpenStreetMap data which is highly accurate for locations globally.
+        // We limit results to India for precision and provide long/lat for local relevance.
+        const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=en&lat=22.3511148&lon=78.6677428`);
+        const data = await response.json();
+        const suggestions = (data.features as PhotonSuggestion[]).filter((f) => f.properties.country === "India" || !f.properties.country);
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(suggestions.length > 0);
+      } catch (err) {
+        console.warn("Address search failed", err);
+      } finally {
+        setIsSearchingAddress(false);
       }
+    },
+    []
+  );
 
-      setFormData((prev) => ({
-        ...prev,
-        streetAddress: street || addressParts[0].trim(),
-        city: city || (addressParts.length > 2 ? addressParts[addressParts.length - 3].trim() : prev.city),
-        state: state || (addressParts.length > 1 ? addressParts[addressParts.length - 2].trim().split(" ")[0] : prev.state),
-        pincode: pincode || (addressParts.length > 1 ? addressParts[addressParts.length - 2].trim().split(" ").pop() || "" : prev.pincode),
-      }));
-
-      // Mark all auto-filled fields as touched and valid
-      setTouched((prev) => ({ ...prev, streetAddress: true, city: true, state: true, pincode: true }));
-      setErrors((prev) => ({ ...prev, streetAddress: null, city: null, state: null, pincode: null }));
-    });
-  }, []);
-
-  // Initialize if script already loaded
-  useEffect(() => {
-    if (window.google && !autocompleteRef.current) {
-      initAutocomplete();
+  // ─── India Post Pincode API (Highly accurate for India) ──────────────────────
+  const fetchCityFromPincode = async (pin: string) => {
+    setIsFetchingCity(true);
+    try {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await response.json();
+      
+      if (data[0].Status === "Success" && data[0].PostOffice?.[0]) {
+        const city = data[0].PostOffice[0].District;
+        const state = data[0].PostOffice[0].State;
+        setFormData(prev => ({ ...prev, city, state }));
+        setErrors(prev => ({ ...prev, city: null, state: null }));
+        setTouched(prev => ({ ...prev, city: true, state: true }));
+      }
+    } catch {
+      console.warn("Pincode API failed, falling back to manual entry.");
+    } finally {
+      setIsFetchingCity(false);
     }
-  }, [initAutocomplete]);
+  };
 
   const handleChange = (field: FormField, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    // Immediate validation for better UX
     if (touched[field]) {
       setErrors((prev) => ({ ...prev, [field]: validators[field](value) }));
+    }
+
+    if (field === "pincode" && value.length === 6) {
+      fetchCityFromPincode(value);
+    }
+
+    if (field === "streetAddress") {
+      if (value.length > 3) {
+        searchAddress(value);
+      } else {
+        setAddressSuggestions([]);
+        setShowSuggestions(false);
+      }
     }
   };
 
   const handleBlur = (field: FormField) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
     setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
+    
+    if (field === "streetAddress") {
+      // Delay closing dropdown to allow click on suggestion
+      setTimeout(() => setShowSuggestions(false), 200);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
+    const p = suggestion.properties;
+    // Combine names to form a useful street address
+    const street = [p.name, p.street, p.district].filter(Boolean).join(", ");
+    
+    setFormData(prev => ({
+      ...prev,
+      streetAddress: street,
+      city: p.city || p.district || prev.city,
+      state: p.state || prev.state,
+      pincode: p.postcode || prev.pincode,
+    }));
+
+    setTouched(prev => ({ ...prev, streetAddress: true, city: true, state: true, pincode: true }));
+    setErrors(prev => ({ ...prev, streetAddress: null, city: null, state: null, pincode: null }));
+    setShowSuggestions(false);
   };
 
   const validateAll = (): boolean => {
@@ -410,13 +370,6 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen flex flex-col noise-bg">
       <Navigation />
-      <GoogleMapStyle />
-      
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-        onLoad={initAutocomplete}
-        strategy="afterInteractive"
-      />
 
       <main className="flex-grow py-24 px-8 max-w-7xl mx-auto w-full">
         <header className="mb-16">
@@ -482,17 +435,45 @@ export default function CheckoutPage() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <FormInput
-                    label="Street / Area Name"
-                    field="streetAddress"
-                    inputRef={streetInputRef}
-                    placeholder="Start typing area name..."
-                    value={formData.streetAddress}
-                    error={errors.streetAddress}
-                    touched={touched.streetAddress}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
+                  <div className="relative">
+                    <FormInput
+                      label="Street / Area Name"
+                      field="streetAddress"
+                      placeholder="Start typing area name..."
+                      value={formData.streetAddress}
+                      error={errors.streetAddress}
+                      touched={touched.streetAddress}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      isLoading={isSearchingAddress}
+                    >
+                      {showSuggestions && (
+                        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-surface border border-foreground/10 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto premium-shadow">
+                          {addressSuggestions.map((s, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => handleSelectSuggestion(s)}
+                              className="w-full px-5 py-4 text-left hover:bg-foreground/5 transition-colors border-b border-foreground/5 last:border-none flex items-start gap-3"
+                            >
+                              <svg className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <div className="flex flex-col">
+                                <span className="font-serif text-sm text-foreground">
+                                  {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                                </span>
+                                <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-widest mt-1">
+                                  {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(", ")}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </FormInput>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -515,6 +496,7 @@ export default function CheckoutPage() {
                     touched={touched.city}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                    isLoading={isFetchingCity}
                   />
                   <FormInput
                     label="State"
@@ -525,10 +507,11 @@ export default function CheckoutPage() {
                     touched={touched.state}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                    isLoading={isFetchingCity}
                   />
                 </div>
                 <p className="text-[10px] font-sans italic text-foreground/30">
-                  Tip: Use the Google Maps dropdown on Street Name to auto-fill your details!
+                  Tip: Use the dropdown on Street Name to auto-fill Area, City, and State!
                 </p>
               </div>
 
@@ -562,7 +545,7 @@ export default function CheckoutPage() {
                       <p className="font-serif text-lg leading-tight">{item.name}</p>
                       <p className="text-[10px] font-sans text-secondary font-bold uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-sans font-bold text-sm">{item.price}</p>
+                    <p className="font-sans font-bold text-sm">₹{item.price.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
