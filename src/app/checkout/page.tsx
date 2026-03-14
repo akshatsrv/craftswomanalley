@@ -210,8 +210,9 @@ export default function CheckoutPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         clearCart();
-        router.push("/order-success");
+        router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}`);
       } else {
         setSubmitError("Something went wrong on our end. Please try again.");
       }
