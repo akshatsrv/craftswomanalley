@@ -423,8 +423,28 @@ export default function CheckoutPage() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                     />
-                    <FormInput label="City" field="city" placeholder="City" value={formData.city} error={errors.city} touched={touched.city} onChange={handleChange} onBlur={handleBlur} />
-                    <FormInput label="State" field="state" placeholder="State" value={formData.state} error={errors.state} touched={touched.state} onChange={handleChange} onBlur={handleBlur} />
+                    <FormInput 
+                      label="City" 
+                      field="city" 
+                      placeholder="City" 
+                      value={formData.city} 
+                      error={errors.city} 
+                      touched={touched.city} 
+                      onChange={handleChange} 
+                      onBlur={handleBlur}
+                      isLoading={isFetchingCity}
+                    />
+                    <FormInput 
+                      label="State" 
+                      field="state" 
+                      placeholder="State" 
+                      value={formData.state} 
+                      error={errors.state} 
+                      touched={touched.state} 
+                      onChange={handleChange} 
+                      onBlur={handleBlur}
+                      isLoading={isFetchingCity}
+                    />
                   </div>
                 </div>
               </div>
@@ -442,36 +462,49 @@ export default function CheckoutPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-24 bg-neutral-50 rounded-2xl p-8 lg:p-10 space-y-8">
-              <h3 className="font-serif text-2xl">Order Summary</h3>
-              <div className="space-y-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="lg:col-span-5 w-full">
+            <div className="lg:sticky lg:top-24 bg-white border border-neutral-100 rounded-3xl p-8 md:p-12 space-y-12 shadow-sm">
+              <h3 className="font-serif text-3xl text-neutral-800">Order Summary</h3>
+              
+              <div className="space-y-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex gap-4 items-center">
-                    <div className="w-16 h-20 relative bg-white rounded-lg overflow-hidden flex-shrink-0 border border-neutral-100">
+                  <div key={item.id} className="flex gap-6 items-start">
+                    <div className="w-20 h-24 relative bg-neutral-50 rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
-                    <div className="flex-grow min-w-0">
-                      <p className="font-serif text-lg truncate leading-tight">{item.name}</p>
-                      <p className="text-[10px] font-sans font-bold text-neutral-400 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
+                    <div className="flex-grow flex justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="font-serif text-xl text-neutral-800 leading-snug">{item.name}</p>
+                        <p className="text-[11px] font-sans font-black text-neutral-400 uppercase tracking-[0.2em]">QTY: {item.quantity}</p>
+                      </div>
+                      <div className="text-right flex flex-col items-end">
+                        <span className="font-serif text-sm text-neutral-500">₹</span>
+                        <span className="font-serif text-2xl text-neutral-900 -mt-2">
+                          {item.price.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <p className="font-sans font-bold text-sm">₹{item.price.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-6 border-t border-neutral-200 space-y-4">
-                <div className="flex justify-between text-[11px] font-sans font-bold uppercase tracking-widest text-neutral-400">
-                  <span>Subtotal</span>
-                  <span className="text-neutral-900">₹{cartTotal.toLocaleString()}</span>
+              <div className="space-y-6 pt-8 border-t border-neutral-100">
+                <div className="flex justify-between items-center group">
+                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Subtotal</span>
+                  <span className="font-sans font-bold text-neutral-900 tracking-tight">₹{cartTotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-[11px] font-sans font-bold uppercase tracking-widest text-neutral-400">
-                  <span>Shipping</span>
-                  <span className="text-secondary">Free</span>
+                <div className="flex justify-between items-center group">
+                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Shipping</span>
+                  <span className="text-secondary font-sans font-black text-[11px] uppercase tracking-widest border-b-2 border-secondary/20 pb-0.5">Free</span>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t border-neutral-200">
-                  <span className="font-serif text-2xl">Total</span>
-                  <span className="font-serif text-3xl text-neutral-900">₹{cartTotal.toLocaleString()}</span>
+                <div className="flex justify-between items-end pt-8 border-t border-neutral-100">
+                  <span className="font-serif text-3xl text-neutral-800">Total</span>
+                  <div className="flex flex-col items-end leading-none">
+                    <span className="font-serif text-5xl text-neutral-900 tracking-tighter">
+                      <span className="text-2xl mr-1 font-normal opacity-50">₹</span>
+                      {cartTotal.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
