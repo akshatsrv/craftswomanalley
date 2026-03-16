@@ -45,6 +45,7 @@ const validators: Record<string, (value: string) => string | null> = {
     if (!emailRegex.test(trimmed)) return "Invalid email";
     return null;
   },
+  confirmEmail: (v) => (v.trim() ? null : "Required"),
   phone: (v) => {
     const digits = v.replace(/\D/g, "");
     if (!digits) return "Required";
@@ -63,7 +64,7 @@ const validators: Record<string, (value: string) => string | null> = {
   },
 };
 
-type FormField = "name" | "email" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
+type FormField = "name" | "email" | "confirmEmail" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ export default function CheckoutPage() {
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "cancelled" | "failed">("idle");
 
   const [formData, setFormData] = useState<Record<FormField, string>>({
-    name: "", email: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
+    name: "", email: "", confirmEmail: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
   });
 
   const [isFormLoaded, setIsFormLoaded] = useState(false);
@@ -203,11 +204,11 @@ export default function CheckoutPage() {
   }, [formData, isFormLoaded]);
 
   const [errors, setErrors] = useState<Record<FormField, string | null>>({
-    name: null, email: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
+    name: null, email: null, confirmEmail: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
   });
 
   const [touched, setTouched] = useState<Record<FormField, boolean>>({
-    name: false, email: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
+    name: false, email: false, confirmEmail: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
   });
 
   const searchAddress = useCallback(
@@ -268,7 +269,14 @@ export default function CheckoutPage() {
 
   const handleBlur = (field: FormField) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
+    let error = validators[field](formData[field]);
+    
+    // Custom cross-field validation for confirmEmail
+    if (field === "confirmEmail" && !error && formData.confirmEmail.trim() !== formData.email.trim()) {
+      error = "Emails do not match";
+    }
+    
+    setErrors((prev) => ({ ...prev, [field]: error }));
     if (field === "streetAddress") {
       setTimeout(() => setShowSuggestions(false), 200);
     }
@@ -299,6 +307,7 @@ export default function CheckoutPage() {
     const newErrors: Record<FormField, string | null> = {
       name: validators.name(formData.name),
       email: validators.email(formData.email),
+      confirmEmail: formData.confirmEmail.trim() !== formData.email.trim() ? "Emails do not match" : null,
       phone: validators.phone(formData.phone),
       houseNumber: validators.houseNumber(formData.houseNumber),
       streetAddress: validators.streetAddress(formData.streetAddress),
@@ -306,7 +315,7 @@ export default function CheckoutPage() {
       state: validators.state(formData.state),
       pincode: validators.pincode(formData.pincode),
     };
-    setTouched({ name: true, email: true, phone: true, houseNumber: true, streetAddress: true, city: true, state: true, pincode: true });
+    setTouched({ name: true, email: true, confirmEmail: true, phone: true, houseNumber: true, streetAddress: true, city: true, state: true, pincode: true });
     setErrors(newErrors);
     return Object.values(newErrors).every((e) => e === null);
   };
@@ -471,7 +480,7 @@ export default function CheckoutPage() {
               {/* Profile */}
               <div className="space-y-5">
                 <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Personal Information</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <FormInput
                     label="Full Name"
                     field="name"
@@ -482,31 +491,42 @@ export default function CheckoutPage() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <FormInput
-                    label="Email"
-                    field="email"
-                    type="email"
-                    placeholder="aarav@example.com"
-                    value={formData.email}
-                    error={errors.email}
-                    touched={touched.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormInput
-                      label="Contact Number"
-                      field="phone"
-                      type="tel"
-                      placeholder="9876543210"
-                      value={formData.phone}
-                      error={errors.phone}
-                      touched={touched.phone}
+                      label="Email Address"
+                      field="email"
+                      type="email"
+                      placeholder="e.g. name@example.com"
+                      value={formData.email}
+                      error={errors.email}
+                      touched={touched.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      isPhone={true}
+                    />
+                    <FormInput
+                      label="Confirm Email"
+                      field="confirmEmail"
+                      type="email"
+                      placeholder="Repeat email address"
+                      value={formData.confirmEmail}
+                      error={errors.confirmEmail}
+                      touched={touched.confirmEmail}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                     />
                   </div>
+                  <FormInput
+                    label="Contact Number"
+                    field="phone"
+                    type="tel"
+                    placeholder="9876543210"
+                    value={formData.phone}
+                    error={errors.phone}
+                    touched={touched.phone}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isPhone={true}
+                  />
                 </div>
               </div>
 

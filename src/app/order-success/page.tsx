@@ -14,6 +14,7 @@ function OrderSuccessContent() {
   const orderId = searchParams.get("orderId") || "CWA-PENDING";
   const delivery = searchParams.get("delivery") || "10 - 15 Business Days";
   const paymentId = searchParams.get("paymentId");
+  const paymentMethod = searchParams.get("method") || "PREPAID";
 
   useEffect(() => {
     // Ensure cart is cleared on success
@@ -41,12 +42,21 @@ function OrderSuccessContent() {
           <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Order ID</span>
           <span className="font-mono font-bold text-foreground bg-foreground/5 px-3 py-1 rounded-lg">{orderId}</span>
         </div>
-        {paymentId && (
+        
+        {paymentMethod === "COD" ? (
           <div className="flex justify-between items-center text-sm">
-            <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Payment Transaction</span>
-            <span className="font-mono font-bold text-secondary/70 bg-secondary/5 px-3 py-1 rounded-lg">{paymentId}</span>
+            <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Payment Method</span>
+            <span className="font-sans font-bold text-accent bg-accent/5 px-3 py-1 rounded-lg italic">Cash on Delivery</span>
           </div>
+        ) : (
+          paymentId && (
+            <div className="flex justify-between items-center text-sm">
+              <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Payment Transaction</span>
+              <span className="font-mono font-bold text-secondary/70 bg-secondary/5 px-3 py-1 rounded-lg">{paymentId}</span>
+            </div>
+          )
         )}
+
         <div className="flex justify-between items-center text-sm">
           <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Expected By</span>
           <span className="font-sans font-bold text-secondary">{delivery}</span>
@@ -55,7 +65,9 @@ function OrderSuccessContent() {
 
       <div className="space-y-6">
         <p className="font-sans text-sm text-foreground/60 leading-relaxed">
-          We have sent a detailed confirmation to your email. We are now beginning the slow craft of your items.
+          {paymentMethod === "COD" 
+            ? "Your COD order is confirmed. Please keep the exact amount ready at the time of delivery."
+            : "We have sent a detailed confirmation to your email. We are now beginning the slow craft of your items."}
         </p>
         
         <div className="flex flex-col gap-4">

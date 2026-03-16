@@ -10,7 +10,7 @@ import {
 } from "@/lib/order-utils";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const ADMIN_EMAIL = "craftswomanalley@gmail.com";
+const ADMIN_EMAIL = "support@craftswomanalley.com";
 
 export async function POST(request: Request) {
   try {
