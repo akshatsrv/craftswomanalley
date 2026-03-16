@@ -48,16 +48,20 @@ export async function POST(request: Request) {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     if (resend) {
+      // NOTE: If you haven't verified your domain in Resend, use 'onboarding@resend.dev'
+      // Once verified (e.g. craftswomanalley.com), change 'onboarding@resend.dev' to 'orders@yourdomain.com'
+      const SENDER_EMAIL = "CraftswomanAlley <onboarding@resend.dev>"; 
+      
       await Promise.all([
         resend.emails.send({
-          from: "CraftswomanAlley <onboarding@resend.dev>",
+          from: SENDER_EMAIL,
           to: customer.email,
           subject: `✨ Order Confirmed! ${orderId} – CraftswomanAlley`,
           html: buildCustomerEmail(customer, items, total, orderId, estimatedDelivery),
           replyTo: ADMIN_EMAIL,
         }),
         resend.emails.send({
-          from: "CraftswomanAlley Orders <onboarding@resend.dev>",
+          from: SENDER_EMAIL,
           to: ADMIN_EMAIL,
           subject: `🛍️ New Order ${orderId} – ₹${total} from ${customer.name}`,
           html: buildAdminEmail(customer, items, total, orderId),
