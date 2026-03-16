@@ -13,6 +13,7 @@ function OrderSuccessContent() {
   
   const orderId = searchParams.get("orderId") || "CWA-PENDING";
   const delivery = searchParams.get("delivery") || "10 - 15 Business Days";
+  const paymentId = searchParams.get("paymentId");
 
   useEffect(() => {
     // Ensure cart is cleared on success
@@ -40,6 +41,12 @@ function OrderSuccessContent() {
           <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Order ID</span>
           <span className="font-mono font-bold text-foreground bg-foreground/5 px-3 py-1 rounded-lg">{orderId}</span>
         </div>
+        {paymentId && (
+          <div className="flex justify-between items-center text-sm">
+            <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Payment Transaction</span>
+            <span className="font-mono font-bold text-secondary/70 bg-secondary/5 px-3 py-1 rounded-lg">{paymentId}</span>
+          </div>
+        )}
         <div className="flex justify-between items-center text-sm">
           <span className="font-sans uppercase tracking-widest text-foreground/40 font-bold">Expected By</span>
           <span className="font-sans font-bold text-secondary">{delivery}</span>
