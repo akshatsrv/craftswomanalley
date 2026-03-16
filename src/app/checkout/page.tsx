@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import Script from "next/script";
+
+// Add declaration for Razorpay global
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { useCart } from "@/context/CartContext";
@@ -58,6 +66,19 @@ const validators: Record<string, (value: string) => string | null> = {
 type FormField = "name" | "email" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
+
+function ProcessingOverlay({ status }: { status: string }) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
+      <div className="relative w-24 h-24 mb-8">
+        <div className="absolute inset-0 border-t-2 border-neutral-900 rounded-full animate-spin"></div>
+        <div className="absolute inset-4 border-b-2 border-neutral-200 rounded-full animate-[spin_2s_linear_infinite_reverse]"></div>
+      </div>
+      <h2 className="font-serif text-2xl tracking-tighter mb-2">{status}</h2>
+      <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold">Please do not refresh or close this window</p>
+    </div>
+  );
+}
 
 function FormInput({
   label,
@@ -117,8 +138,8 @@ function FormInput({
             ${isPhone ? "pl-11" : "pl-3.5"}
             ${
               hasError
-                ? "border-red-200 bg-red-50/10 focus:ring-1 focus:ring-red-400 focus:outline-none"
-                : "border-neutral-200 focus:border-accent focus:ring-accent focus:outline-none"
+                ? "border-red-500 bg-red-50/10 focus:outline-none outline-none"
+                : "border-neutral-200 focus:border-neutral-900 focus:outline-none outline-none"
             }
             hover:border-neutral-300 placeholder:text-neutral-300`}
         />
@@ -150,9 +171,36 @@ export default function CheckoutPage() {
   const [addressSuggestions, setAddressSuggestions] = useState<PhotonSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const [processingStatus, setProcessingStatus] = useState<string>("");
+
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "cancelled" | "failed">("idle");
+
   const [formData, setFormData] = useState<Record<FormField, string>>({
     name: "", email: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
   });
+
+  const [isFormLoaded, setIsFormLoaded] = useState(false);
+
+  // Load persisted data on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("cwa_checkout_form");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error("Failed to parse saved form data", e);
+      }
+    }
+    setIsFormLoaded(true);
+  }, []);
+
+  // Save data on change - only after initial load is complete
+  useEffect(() => {
+    if (isFormLoaded) {
+      localStorage.setItem("cwa_checkout_form", JSON.stringify(formData));
+    }
+  }, [formData, isFormLoaded]);
 
   const [errors, setErrors] = useState<Record<FormField, string | null>>({
     name: null, email: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
@@ -228,7 +276,13 @@ export default function CheckoutPage() {
 
   const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
     const p = suggestion.properties;
-    const street = [p.name, p.street].filter(Boolean).join(", ");
+    // Combine name, street, and district for a full street/area description
+    // District often contains important locality info in India (like Sector numbers)
+    const addressParts = [p.name, p.street, p.district].filter(Boolean);
+    // Remove duplicates (sometimes name or street might repeat district info)
+    const uniqueParts = addressParts.filter((item, index) => addressParts.indexOf(item) === index);
+    const street = uniqueParts.join(", ");
+    
     setFormData(prev => ({
       ...prev,
       streetAddress: street,
@@ -260,30 +314,106 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    setPaymentStatus("idle");
+
     if (!validateAll()) return;
+    
     setIsSubmitting(true);
+    setPaymentStatus("processing");
+    setProcessingStatus("Preparing secure checkout...");
+
     try {
       const fullAddress = `${formData.houseNumber}, ${formData.streetAddress}`;
-      const response = await fetch("/api/order", {
+      const customerData = { ...formData, address: fullAddress };
+
+      // 1. Create Razorpay Order
+      const orderRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          customer: { ...formData, address: fullAddress }, 
-          items: cart, 
-          total: cartTotal 
-        }),
+        body: JSON.stringify({ amount: cartTotal }),
       });
-      if (response.ok) {
-        const data = await response.json();
-        clearCart();
-        router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}`);
-      } else {
-        setSubmitError("Checkout currently unavailable. Please try again.");
+
+      if (!orderRes.ok) {
+        throw new Error("We couldn't initialize the payment. Please try again or check your connection.");
       }
-    } catch {
-      setSubmitError("Check your internet connection.");
-    } finally {
+      
+      const { orderId, amount, currency } = await orderRes.json();
+      setProcessingStatus("Connecting to payment server...");
+
+      if (!window.Razorpay) {
+        throw new Error("Secure payment system failed to load. Please refresh the page and try again.");
+      }
+
+      // 2. Open Razorpay Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount,
+        currency,
+        name: "CraftswomanAlley",
+        description: `Order ID: ${orderId}`,
+        order_id: orderId,
+        handler: async (response: any) => {
+          setProcessingStatus("Verifying transaction details...");
+          // 3. Verify Payment
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                customer: customerData,
+                items: cart,
+                total: cartTotal,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              const data = await verifyRes.json();
+              setProcessingStatus("Order finalized. Redirecting...");
+              localStorage.removeItem("cwa_checkout_form");
+              clearCart();
+              router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}&paymentId=${data.paymentId}`);
+            } else {
+              router.push(`/order-failed?type=verify&reason=${encodeURIComponent("Payment verification mismatch. Our team will contact you if money was deducted.")}`);
+            }
+          } catch (err) {
+            router.push(`/order-failed?type=error&reason=${encodeURIComponent("Network lost during verification. Please check your email for confirmation before retrying.")}`);
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: `+91${formData.phone}`,
+        },
+        theme: {
+          color: "#000000",
+        },
+        modal: {
+          confirm_close: true,
+          ondismiss: () => {
+            setProcessingStatus("");
+            setIsSubmitting(false);
+            setPaymentStatus("cancelled");
+            router.push(`/order-failed?type=cancel&reason=${encodeURIComponent("Payment was cancelled by the user.")}`);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        setProcessingStatus("");
+        setIsSubmitting(false);
+        router.push(`/order-failed?type=failure&reason=${encodeURIComponent(response.error.description)}`);
+      });
+      rzp.open();
+
+    } catch (err: any) {
+      setSubmitError(err.message || "An unexpected error occurred. Please try again.");
+      setPaymentStatus("failed");
       setIsSubmitting(false);
+      setProcessingStatus("");
     }
   };
 
@@ -301,6 +431,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-neutral-50/50">
       <Navigation />
+      {isSubmitting && processingStatus && <ProcessingOverlay status={processingStatus} />}
 
       <main className="max-w-[1000px] mx-auto px-6 py-10 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -312,6 +443,31 @@ export default function CheckoutPage() {
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-10">
+              {/* Payment Status Alerts (Amazon Style) */}
+              {(submitError || paymentStatus === "cancelled" || paymentStatus === "failed") && (
+                <div className={`p-4 rounded-md border flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+                  paymentStatus === "cancelled" 
+                    ? "bg-amber-50 border-amber-100 text-amber-800" 
+                    : "bg-red-50 border-red-100 text-red-800"
+                }`}>
+                  <div className="shrink-0 mt-0.5">
+                    {paymentStatus === "cancelled" ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 17c-.77 1.333.192 3 1.732 3z"/></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-tight">
+                      {paymentStatus === "cancelled" ? "Payment Cancelled" : "Payment Action Required"}
+                    </p>
+                    <p className="text-[12px] opacity-90 leading-snug">
+                      {submitError}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Profile */}
               <div className="space-y-5">
                 <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Personal Information</p>
@@ -387,13 +543,13 @@ export default function CheckoutPage() {
                               key={i}
                               type="button"
                               onClick={() => handleSelectSuggestion(s)}
-                              className="w-full px-3 py-2.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
+                              className="w-full px-3 py-2.5 text-left hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none outline-none transition-colors border-b border-neutral-50 last:border-0"
                             >
                               <p className="text-[13px] font-medium text-neutral-800 line-clamp-1">
-                                {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
+                                {[s.properties.name, s.properties.street, s.properties.district].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", ")}
                               </p>
                               <p className="text-[9px] text-neutral-400 uppercase tracking-wide">
-                                {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(" • ")}
+                                {[s.properties.city, s.properties.state].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(" • ")}
                               </p>
                             </button>
                           ))}
@@ -418,14 +574,23 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {submitError && <div className="p-3 text-red-600 bg-red-50 rounded-sm text-[11px] font-bold uppercase tracking-wider text-center">{submitError}</div>}
+
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-neutral-900 text-white rounded-md py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-50"
+                className={`w-full rounded-md py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-3
+                  ${paymentStatus === "processing" ? "bg-accent/10 text-accent border border-accent/20" : "bg-neutral-900 text-white hover:bg-neutral-800"}
+                `}
               >
-                {isSubmitting ? "Orchestrating..." : "Complete Order"}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    {paymentStatus === "processing" ? "Waiting for Razorpay..." : "Processing..."}
+                  </>
+                ) : (
+                  paymentStatus === "failed" ? "Retry Payment" : "Complete Order"
+                )}
               </button>
             </form>
           </div>
@@ -482,6 +647,10 @@ export default function CheckoutPage() {
       </main>
 
       <Footer />
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

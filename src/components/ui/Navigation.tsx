@@ -33,7 +33,7 @@ export function Navigation() {
               <input 
                 type="text" 
                 placeholder="Search our alley..." 
-                className="bg-transparent border-none focus:ring-0 text-xs w-32 placeholder:text-foreground/30 font-sans font-medium"
+                className="bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-xs w-32 placeholder:text-foreground/30 font-sans font-medium"
               />
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-foreground/40 group-focus-within:text-secondary">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
