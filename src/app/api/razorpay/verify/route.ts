@@ -48,9 +48,8 @@ export async function POST(request: Request) {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     if (resend) {
-      // NOTE: If you haven't verified your domain in Resend, use 'onboarding@resend.dev'
-      // Once verified (e.g. craftswomanalley.com), change 'onboarding@resend.dev' to 'orders@yourdomain.com'
-      const SENDER_EMAIL = "CraftswomanAlley <onboarding@resend.dev>"; 
+      // Domain verification in progress - switching to professional support address
+      const SENDER_EMAIL = "CraftswomanAlley <support@craftswomanalley.com>"; 
       
       await Promise.all([
         resend.emails.send({
