@@ -43,8 +43,8 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-[4/5] rounded-2xl overflow-hidden premium-shadow group">
               <Image 
-                src="/images/about/artisan-hands.png" 
-                alt="Artisan Hands" 
+                src="/images/about/the-beginning.png" 
+                alt="The Beginning - Quiet Corner" 
                 fill 
                 className="object-cover transition-transform duration-700 group-hover:scale-105" 
               />
