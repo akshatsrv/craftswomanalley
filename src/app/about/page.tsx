@@ -12,15 +12,15 @@ export default function AboutPage() {
             CraftswomanAlley was born from a simple belief: the most beautiful things in the world are born from the human hand and the physical soul.
           </p>
           <div className="h-px w-20 bg-accent mx-auto"></div>
-          <div className="font-sans text-lg text-foreground/70 leading-loose text-justify space-y-8">
+          <div className="font-sans text-lg text-foreground/70 leading-loose text-justify space-y-8 italic">
             <p>
-              In a world that increasingly moves toward the digital and the ephemeral, we choose to celebrate the slow, the tactile, and the permanent. Our alley is a curated space for female artisans who weave, dye, letter, and bind stories into objects.
+              इस डिजिटल और मशीनी दुनिया में, हम उन हाथों को सलाम करते हैं जो सलीके, समय और धैर्य के साथ कुछ नया रचते हैं। क्राफ्ट्सवुमन एली (CraftswomanAlley) उन महिला शिल्पकारों की एक साझी गली है जो धागों, रंगों और अपनी रूह के जज्बातों से कहानियों को बुनती हैं।
             </p>
             <p>
-              From the fuzzy wire blooms that never fade to the antique scrolls that carry your most intimate words, every piece is a legacy. We believe in the power of natural materials—linen, kraft paper, hand-pressed flowers, and silk.
+              चाहे वो कभी न मुरझाने वाले 'फ़ज़ी वायर' फूल हों या आपकी सबसे आत्मीय भावनाओं को सँजोने वाले ये प्राचीन स्क्रॉल—यहाँ की हर रचना अपने आप में एक विरासत है। हम प्रकृति के सहज और कोमल स्वरूप—जैसे लिनन, क्राफ्ट पेपर और रेशम—की शुद्धता में विश्वास रखते हैं।
             </p>
-            <p>
-              Thank you for supporting the slow craft movement.
+            <p className="text-center font-serif not-italic text-xl text-neutral-900 border-t border-neutral-100 pt-8">
+              धीमी हस्तकला (Slow Craft) की इस खूबसूरत यात्रा में हमारा साथ देने के लिए आपका हृदय से आभार।
             </p>
           </div>
         </section>
