@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       razorpay_signature,
       customer,
       items,
-      total
+      total,
+      taxAmount
     } = await request.json();
 
     // 1. Verify Payment Signature
@@ -32,23 +33,23 @@ export async function POST(request: Request) {
 
     const isAuthentic = expectedSignature === razorpay_signature;
 
+    const orderId = generateOrderId();
+    const estimatedDelivery = getEstimatedDelivery();
+
     if (!isAuthentic) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
     // 2. Payment is valid, finalize order
-    const orderId = generateOrderId();
-    const estimatedDelivery = getEstimatedDelivery();
-
     console.log("\n━━━━━━━━━━ NEW VERIFIED ORDER ━━━━━━━━━━");
     console.log("Order ID    :", orderId);
     console.log("Payment ID  :", razorpay_payment_id);
     console.log("Customer    :", customer.name, `<${customer.email}>`);
     console.log("Total       : ₹" + total);
+    console.log("GST (18%)   : ₹" + taxAmount);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     if (resend) {
-      // Domain verification in progress - switching to professional support address
       const SENDER_EMAIL = "CraftswomanAlley <support@craftswomanalley.com>"; 
       
       await Promise.all([
@@ -56,14 +57,14 @@ export async function POST(request: Request) {
           from: SENDER_EMAIL,
           to: customer.email,
           subject: `✨ Order Confirmed! ${orderId} – CraftswomanAlley`,
-          html: buildCustomerEmail(customer, items, total, orderId, estimatedDelivery),
+          html: buildCustomerEmail(customer, items, total, orderId, estimatedDelivery, "Prepaid", taxAmount),
           replyTo: ADMIN_EMAIL,
         }),
         resend.emails.send({
           from: SENDER_EMAIL,
           to: ADMIN_EMAIL,
           subject: `🛍️ New Order ${orderId} – ₹${total} from ${customer.name}`,
-          html: buildAdminEmail(customer, items, total, orderId),
+          html: buildAdminEmail(customer, items, total, orderId, "Prepaid", taxAmount),
           replyTo: customer.email,
         }),
       ]);

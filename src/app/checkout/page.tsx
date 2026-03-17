@@ -15,6 +15,47 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+const GST_RATE = 0.18;
+
+const STATE_GST_CODES: Record<string, string> = {
+  "jammu and kashmir": "01",
+  "himachal pradesh": "02",
+  "punjab": "03",
+  "chandigarh": "04",
+  "uttarakhand": "05",
+  "haryana": "06",
+  "delhi": "07",
+  "rajasthan": "08",
+  "uttar pradesh": "09",
+  "bihar": "10",
+  "sikkim": "11",
+  "arunachal pradesh": "12",
+  "nagaland": "13",
+  "manipur": "14",
+  "mizoram": "15",
+  "tripura": "16",
+  "meghalaya": "17",
+  "assam": "18",
+  "west bengal": "19",
+  "jharkhand": "20",
+  "odisha": "21",
+  "chhattisgarh": "22",
+  "madhya pradesh": "23",
+  "gujarat": "24",
+  "maharashtra": "27",
+  "andhra pradesh": "37",
+  "karnataka": "29",
+  "goa": "30",
+  "lakshadweep": "31",
+  "kerala": "32",
+  "tamil nadu": "33",
+  "puducherry": "34",
+  "andaman and nicobar islands": "35",
+  "telangana": "36",
+  "ladakh": "38",
+  "dadra and nagar haveli and daman and diu": "26"
+};
+
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
 interface PhotonSuggestion {
@@ -165,6 +206,7 @@ function FormInput({
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart } = useCart();
   const router = useRouter();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -179,6 +221,19 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState<Record<FormField, string>>({
     name: "", email: "", confirmEmail: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
   });
+
+  // Tax calculations
+  const taxAmount = Math.round(cartTotal * GST_RATE);
+  const grandTotal = cartTotal + taxAmount;
+
+  const [showTaxBreakdown, setShowTaxBreakdown] = useState(false);
+  const userStateKey = formData.state?.toLowerCase().trim() || "";
+  const userStateCode = STATE_GST_CODES[userStateKey] || "";
+  const isRajasthan = userStateCode === "08";
+  
+  const cgst = isRajasthan ? Math.floor(taxAmount / 2) : 0;
+  const sgst = isRajasthan ? taxAmount - cgst : 0;
+  const igst = !isRajasthan ? taxAmount : 0;
 
   const [isFormLoaded, setIsFormLoaded] = useState(false);
 
@@ -339,7 +394,7 @@ export default function CheckoutPage() {
       const orderRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: cartTotal }),
+        body: JSON.stringify({ amount: grandTotal }),
       });
 
       if (!orderRes.ok) {
@@ -374,7 +429,8 @@ export default function CheckoutPage() {
                 razorpay_signature: response.razorpay_signature,
                 customer: customerData,
                 items: cart,
-                total: cartTotal,
+                total: grandTotal,
+                taxAmount: taxAmount,
               }),
             });
 
@@ -382,8 +438,11 @@ export default function CheckoutPage() {
               const data = await verifyRes.json();
               setProcessingStatus("Order finalized. Redirecting...");
               localStorage.removeItem("cwa_checkout_form");
-              clearCart();
-              router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}&paymentId=${data.paymentId}`);
+              const hasPersonalisedItem = cart.some(item => 
+                item.name.toLowerCase().includes('journal') || 
+                item.name.toLowerCase().includes('scrapbook')
+              );
+              router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}&paymentId=${data.paymentId}${hasPersonalisedItem ? '&personalised=true' : ''}`);
             } else {
               router.push(`/order-failed?type=verify&reason=${encodeURIComponent("Payment verification mismatch. Our team will contact you if money was deducted.")}`);
             }
@@ -647,6 +706,47 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span className="text-neutral-900">₹{cartTotal.toLocaleString()}</span>
                 </div>
+                <div className="space-y-2">
+                  <div 
+                    className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400 group cursor-pointer" 
+                    onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}
+                  >
+                    <div className="flex items-center gap-1.5 transition-colors group-hover:text-neutral-600">
+                      <span>GST (18%)</span>
+                      <svg 
+                        className={`w-2.5 h-2.5 transition-transform duration-300 ${showTaxBreakdown ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    <span className="text-neutral-900">₹{taxAmount.toLocaleString()}</span>
+                  </div>
+                  
+                  {showTaxBreakdown && (
+                    <div className="pl-4 space-y-1.5 border-l border-neutral-100 my-2">
+                      {isRajasthan ? (
+                        <>
+                          <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                            <span>CGST (9%) - Code 08</span>
+                            <span>₹{cgst.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                            <span>SGST (9%) - Code 08</span>
+                            <span>₹{sgst.toLocaleString()}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                          <span>IGST (18%) {userStateCode ? `- Code ${userStateCode}` : ''}</span>
+                          <span>₹{igst.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
                   <span>Shipping</span>
                   <span className="text-secondary tracking-widest">Free</span>
@@ -656,7 +756,7 @@ export default function CheckoutPage() {
                   <div className="flex items-end gap-1 leading-none">
                     <span className="font-serif text-lg text-neutral-400 mb-0.5">₹</span>
                     <span className="font-serif text-4xl text-neutral-900 tracking-tighter">
-                      {cartTotal.toLocaleString()}
+                      {grandTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>

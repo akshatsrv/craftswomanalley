@@ -1,5 +1,44 @@
 export type OrderItem = { name: string; quantity: number; price: string; image?: string };
 
+const STATE_GST_CODES: Record<string, string> = {
+  "jammu and kashmir": "01",
+  "himachal pradesh": "02",
+  "punjab": "03",
+  "chandigarh": "04",
+  "uttarakhand": "05",
+  "haryana": "06",
+  "delhi": "07",
+  "rajasthan": "08",
+  "uttar pradesh": "09",
+  "bihar": "10",
+  "sikkim": "11",
+  "arunachal pradesh": "12",
+  "nagaland": "13",
+  "manipur": "14",
+  "mizoram": "15",
+  "tripura": "16",
+  "meghalaya": "17",
+  "assam": "18",
+  "west bengal": "19",
+  "jharkhand": "20",
+  "odisha": "21",
+  "chhattisgarh": "22",
+  "madhya pradesh": "23",
+  "gujarat": "24",
+  "maharashtra": "27",
+  "andhra pradesh": "37",
+  "karnataka": "29",
+  "goa": "30",
+  "lakshadweep": "31",
+  "kerala": "32",
+  "tamil nadu": "33",
+  "puducherry": "34",
+  "andaman and nicobar islands": "35",
+  "telangana": "36",
+  "ladakh": "38",
+  "dadra and nagar haveli and daman and diu": "26"
+};
+
 // ─── Generate unique order ID ─────────────────────────────────────────────────
 export function generateOrderId(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -26,8 +65,10 @@ export function buildCustomerEmail(
   total: number, 
   orderId: string, 
   estimatedDelivery: string,
-  paymentMethod: string = "Prepaid"
+  paymentMethod: string = "Prepaid",
+  taxAmount: number = 0
 ): string {
+  const subtotal = total - taxAmount;
   const itemsHtml = items.map((item) => `
     <tr>
       <td style="padding: 16px 0; border-bottom: 1px solid #f0f0f0;">
@@ -120,6 +161,21 @@ export function buildCustomerEmail(
           </td>
         </tr>
 
+        ${items.some(item => item.name.toLowerCase().includes('journal') || item.name.toLowerCase().includes('scrapbook')) ? `
+        <!-- PERSONALIZATION CTA -->
+        <tr>
+          <td class="section" style="background:#fff; padding: 24px 40px 0;">
+            <div style="background:#f0e6ff; border:2px solid #e0d5f5; border-radius:12px; padding:24px; text-align:center;">
+              <p style="margin:0 0 8px; font-family:sans-serif; font-size:10px; font-weight:700; color:#7c4dff; text-transform:uppercase; letter-spacing:0.1em;">Action Required</p>
+              <h2 style="margin:0 0 12px; font-size:20px; color:#1a1a1a; font-weight:600;">Complete Your Personalization</h2>
+              <p style="margin:0 0 20px; font-size:13px; color:#666; font-family:sans-serif; line-height:1.5;">To create your bespoke journal, please share your cherished quotes, photos, and dates through our secure form.</p>
+              <a href="https://forms.gle/CWA-Personalisation" style="background:#7c4dff; color:#fff; padding:14px 28px; border-radius:8px; text-decoration:none; font-family:sans-serif; font-size:14px; font-weight:700; display:inline-block; box-shadow:0 4px 12px rgba(124, 77, 255, 0.3);">Open Personalization Form</a>
+              <p style="margin:16px 0 0; font-size:11px; color:#999; font-family:sans-serif;">🛡️ Your details are handled with utmost care and privacy.</p>
+            </div>
+          </td>
+        </tr>
+        ` : ""}
+
         <!-- ORDER DETAILS BOX -->
         <tr>
           <td class="section" style="background:#fff; padding: 24px 40px;">
@@ -156,8 +212,23 @@ export function buildCustomerEmail(
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="font-family:sans-serif; font-size:12px; color:#888; padding:4px 0;">Subtotal</td>
-                <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#888;">₹${total.toLocaleString("en-IN")}</td>
+                <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#888;">₹${subtotal.toLocaleString("en-IN")}</td>
               </tr>
+              ${customer.state?.toLowerCase().trim() === "rajasthan" ? `
+                <tr>
+                  <td style="font-family:sans-serif; font-size:12px; color:#888; padding:4px 0;">CGST (9%) - Code 08</td>
+                  <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#888;">₹${Math.floor(taxAmount / 2).toLocaleString("en-IN")}</td>
+                </tr>
+                <tr>
+                  <td style="font-family:sans-serif; font-size:12px; color:#888; padding:4px 0;">SGST (9%) - Code 08</td>
+                  <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#888;">₹${(taxAmount - Math.floor(taxAmount / 2)).toLocaleString("en-IN")}</td>
+                </tr>
+              ` : `
+                <tr>
+                  <td style="font-family:sans-serif; font-size:12px; color:#888; padding:4px 0;">IGST (18%) ${STATE_GST_CODES[customer.state?.toLowerCase().trim() || ""] ? `- Code ${STATE_GST_CODES[customer.state?.toLowerCase().trim() || ""]}` : ''}</td>
+                  <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#888;">₹${taxAmount.toLocaleString("en-IN")}</td>
+                </tr>
+              `}
               <tr>
                 <td style="font-family:sans-serif; font-size:12px; color:#888; padding:4px 0;">Shipping</td>
                 <td style="text-align:right; font-family:sans-serif; font-size:12px; color:#2ecc71; font-weight:700;">FREE</td>
@@ -210,8 +281,10 @@ export function buildAdminEmail(
   items: OrderItem[], 
   total: number, 
   orderId: string,
-  paymentMethod: string = "Prepaid"
+  paymentMethod: string = "Prepaid",
+  taxAmount: number = 0
 ): string {
+  const subtotal = total - taxAmount;
   const itemsHtml = items.map((item) => `
     <tr style="border-bottom:1px solid #f0f0f0;">
       <td style="padding:12px 8px; font-family:sans-serif; font-size:13px; color:#1a1a1a;">${item.name}</td>
@@ -318,8 +391,27 @@ export function buildAdminEmail(
                 <th style="padding:10px 8px; font-size:10px; text-transform:uppercase; letter-spacing:0.2em; color:#888; text-align:right;">Price</th>
               </tr>
               ${itemsHtml}
+              <tr style="border-top:1px solid #f0f0f0;">
+                <td colspan="2" style="padding:8px 8px; font-size:13px; color:#888;">Subtotal</td>
+                <td style="padding:8px 8px; font-size:13px; color:#1a1a1a; text-align:right;">₹${subtotal.toLocaleString("en-IN")}</td>
+              </tr>
+              ${customer.state?.toLowerCase().trim() === "rajasthan" ? `
+                <tr>
+                  <td colspan="2" style="padding:4px 8px; font-size:13px; color:#888;">CGST (9%) - Code 08</td>
+                  <td style="padding:4px 8px; font-size:13px; color:#1a1a1a; text-align:right;">₹${Math.floor(taxAmount / 2).toLocaleString("en-IN")}</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding:4px 8px; font-size:13px; color:#888;">SGST (9%) - Code 08</td>
+                  <td style="padding:4px 8px; font-size:13px; color:#1a1a1a; text-align:right;">₹${(taxAmount - Math.floor(taxAmount / 2)).toLocaleString("en-IN")}</td>
+                </tr>
+              ` : `
+                <tr>
+                  <td colspan="2" style="padding:4px 8px; font-size:13px; color:#888;">IGST (18%) ${STATE_GST_CODES[customer.state?.toLowerCase().trim() || ""] ? `- Code ${STATE_GST_CODES[customer.state?.toLowerCase().trim() || ""]}` : ''}</td>
+                  <td style="padding:4px 8px; font-size:13px; color:#1a1a1a; text-align:right;">₹${taxAmount.toLocaleString("en-IN")}</td>
+                </tr>
+              `}
               <tr>
-                <td colspan="2" style="padding:16px 8px; font-size:15px; font-weight:700;">Total</td>
+                <td colspan="2" style="padding:16px 8px; font-size:15px; font-weight:700;">Grand Total</td>
                 <td style="padding:16px 8px; font-size:18px; font-weight:700; color:#7c4dff; text-align:right;">₹${total.toLocaleString("en-IN")}</td>
               </tr>
             </table>

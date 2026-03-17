@@ -41,13 +41,18 @@ function OrderFailedContent() {
 
     setIsProcessingCod(true);
     try {
+      const GST_RATE = 0.18;
+      const taxAmount = Math.round(cartTotal * GST_RATE);
+      const grandTotal = cartTotal + taxAmount;
+      
       const res = await fetch("/api/order/cod", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: customerData,
           items: cart,
-          total: cartTotal
+          total: grandTotal,
+          taxAmount: taxAmount
         }),
       });
 

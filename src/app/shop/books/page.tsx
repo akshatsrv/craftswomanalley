@@ -6,10 +6,11 @@ import { ProductCard } from "@/components/ui/ProductCard";
 import Link from "next/link";
 
 const books = [
-  { id: "book-1", name: "Archival Memory Journal", price: "₹1,850", image: "/images/memory_book.png", category: "Hand-Bound Books", description: "Japanese stab stitching using silk thread. Archival paper that welcomes both ink and watercolor." },
-  { id: "book-2", name: "Scrapbook of Friendships", price: "₹2,200", image: "/images/scrapbook_friends_real.jpg", category: "Hand-Bound Books", description: "A beautifully crafted scrapbook to celebrate the people who make life meaningful." },
-  { id: "book-3", name: "Birthday Memory Album", price: "₹1,950", image: "/images/scrapbook_birthday_real.jpg", category: "Hand-Bound Books", description: "Chronicle every birthday milestone in a lovingly hand-bound album." },
-  { id: "book-4", name: "Travel Chronicle Notebook", price: "₹1,650", image: "/images/memory_book.png", category: "Hand-Bound Books", description: "For the wanderer who keeps physical memories. Thread-bound with vintage cloth covers." },
+  { id: "personalised-journal", name: "Personalised Journal or Scrapbook", price: "From ₹1,499", image: "/images/personalised-journal/journal_cover.jpg", category: "Hand-Bound Journals & Scrapbooks", description: "A5 hand-bound bespoke book crafted for your most intimate memories. Layered with collage work and personalized elements." },
+  { id: "book-1", name: "Archival Memory Journal", price: "₹1,850", image: "/images/memory_book.png", category: "Hand-Bound Journals & Scrapbooks", description: "Japanese stab stitching using silk thread. Archival paper that welcomes both ink and watercolor." },
+  { id: "book-2", name: "Scrapbook of Friendships", price: "₹2,200", image: "/images/scrapbook_friends_real.jpg", category: "Hand-Bound Journals & Scrapbooks", description: "A beautifully crafted scrapbook to celebrate the people who make life meaningful." },
+  { id: "book-3", name: "Birthday Memory Album", price: "₹1,950", image: "/images/scrapbook_birthday_real.jpg", category: "Hand-Bound Journals & Scrapbooks", description: "Chronicle every birthday milestone in a lovingly hand-bound album." },
+  { id: "book-4", name: "Travel Chronicle Notebook", price: "₹1,650", image: "/images/memory_book.png", category: "Hand-Bound Journals & Scrapbooks", description: "For the wanderer who keeps physical memories. Thread-bound with vintage cloth covers." },
 ];
 
 export default function BooksPage() {
@@ -23,12 +24,12 @@ export default function BooksPage() {
           <span>/</span>
           <Link href="/shop" className="hover:text-secondary transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-foreground/60">Memory Books</span>
+          <span className="text-foreground/60">Journals & Scrapbooks</span>
         </nav>
 
         <header className="mb-24 text-center space-y-4">
           <span className="font-sans text-[10px] uppercase tracking-[0.5em] font-bold text-secondary text-center block w-full">Your Story, Bound</span>
-          <h1 className="font-serif text-5xl lg:text-7xl tracking-tighter text-foreground text-center">Memory Books</h1>
+          <h1 className="font-serif text-5xl lg:text-7xl tracking-tighter text-foreground text-center">Journals & Scrapbooks</h1>
           <p className="font-serif italic text-xl text-foreground/40 max-w-xl mx-auto text-center">
             Hand-bound chronicles for your most cherished moments.
           </p>
@@ -39,6 +40,7 @@ export default function BooksPage() {
             <ProductCard
               key={book.id}
               {...book}
+              href={`/shop/books/${book.id}`}
               aspectRatio="aspect-[3/4]"
             />
           ))}

@@ -6,7 +6,7 @@ import Link from "next/link";
 const categories = [
   { name: "Flowers", img: "/images/velvet_tulip.png", href: "/shop/flowers" },
   { name: "Scrolls", img: "/images/hero_scroll.png", href: "/shop/scrolls" },
-  { name: "Memory Books", img: "/images/memory_book.png", href: "/shop/books" },
+  { name: "Journals", img: "/images/personalised-journal/journal_cover.jpg", href: "/shop/books/personalised-journal" },
   { name: "Hampers", img: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg", href: "/shop/hampers" },
   { name: "Cards", img: "https://i.pinimg.com/736x/e4/52/88/e4528881961e8d7eafe425dadb3df1af.jpg", href: "/shop/cards" },
   { name: "Candles", img: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg", href: "/shop/candles" },
@@ -114,12 +114,12 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div className="space-y-8 order-2 lg:order-1">
                 <span className="text-accent text-xs uppercase tracking-[0.4em] font-sans font-bold">Your Story, Bound</span>
-                <h2 className="font-serif text-5xl lg:text-7xl leading-tight tracking-tighter">Memory Books</h2>
+                <h2 className="font-serif text-5xl lg:text-7xl leading-tight tracking-tighter">Journals & Scrapbooks</h2>
                 <p className="font-serif italic text-xl text-foreground/60 leading-relaxed max-w-lg">
                   Hand-bound chronicles for your most cherished moments. Japanese stab stitching meets archival paper for a legacy that lasts.
                 </p>
                 <div className="flex gap-4 items-center">
-                  <Link href="/shop/books">
+                  <Link href="/shop/books/personalised-journal">
                     <Button variant="primary" size="lg">Explore Albums</Button>
                   </Link>
                   <Link href="/contact" className="text-xs font-sans font-bold uppercase tracking-widest border-b border-foreground/20 hover:border-accent transition-all pb-1">Commission Yours</Link>

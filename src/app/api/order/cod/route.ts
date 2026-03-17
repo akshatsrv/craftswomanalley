@@ -12,7 +12,7 @@ const ADMIN_EMAIL = "support@craftswomanalley.com";
 
 export async function POST(request: Request) {
   try {
-    const { customer, items, total } = await request.json();
+    const { customer, items, total, taxAmount = 0 } = await request.json();
 
     const orderId = generateOrderId();
     const estimatedDelivery = getEstimatedDelivery();
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     console.log("Method      : Cash on Delivery");
     console.log("Customer    :", customer.name, `<${customer.email}>`);
     console.log("Total       : ₹" + total);
+    console.log("GST (18%)   : ₹" + taxAmount);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     if (resend) {
@@ -32,14 +33,14 @@ export async function POST(request: Request) {
           from: SENDER_EMAIL,
           to: customer.email,
           subject: `📦 COD Order Confirmed! ${orderId} – CraftswomanAlley`,
-          html: buildCustomerEmail(customer, items, total, orderId, estimatedDelivery, "COD"),
+          html: buildCustomerEmail(customer, items, total, orderId, estimatedDelivery, "COD", taxAmount),
           replyTo: ADMIN_EMAIL,
         }),
         resend.emails.send({
           from: SENDER_EMAIL,
           to: ADMIN_EMAIL,
           subject: `🫴 NEW COD ORDER ${orderId} – ₹${total} from ${customer.name}`,
-          html: buildAdminEmail(customer, items, total, orderId, "COD"),
+          html: buildAdminEmail(customer, items, total, orderId, "COD", taxAmount),
           replyTo: customer.email,
         }),
       ]);

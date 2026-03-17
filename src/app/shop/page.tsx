@@ -4,8 +4,8 @@ import Link from "next/link";
 
 const categories = [
   { name: "Bouquets & Flowers", count: "12 Items", href: "/shop/flowers", image: "/images/velvet_tulip.png" },
-  { name: "Antique Scrolls", count: "8 Items", href: "/shop/scrolls/1", image: "/images/hero_scroll.png" },
-  { name: "Hand-Bound Books", count: "5 Items", href: "/shop/books/1", image: "/images/memory_book.png" },
+  { name: "Antique Scrolls", count: "8 Items", href: "/shop/scrolls", image: "/images/hero_scroll.png" },
+  { name: "Hand-Bound Journals & Scrapbooks", count: "Bespoke", href: "/shop/books/personalised-journal", image: "/images/personalised-journal/journal_cover.jpg" },
   { name: "Gift Hampers", count: "10 Items", href: "/shop/hampers", image: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg" },
   { name: "Handmade Cards", count: "24 Items", href: "/shop/cards", image: "https://i.pinimg.com/736x/e4/52/88/e4528881961e8d7eafe425dadb3df1af.jpg" },
   { name: "Artisan Candles", count: "6 Items", href: "/shop/candles", image: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg" },

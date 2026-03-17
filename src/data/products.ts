@@ -1,12 +1,21 @@
+export type ProductVariant = {
+  id: string;
+  label: string;
+  price: number;
+};
+
 export type Product = {
   id: string;
   name: string;
-  price: string;
+  price: string | number;
   image: string;
   category: string;
   description: string;
   deliveryTime: string;
   details?: string;
+  variants?: ProductVariant[];
+  includes?: string[];
+  images?: string[];
 };
 
 export const products: Record<string, Product> = {
@@ -33,9 +42,38 @@ export const products: Record<string, Product> = {
     name: "Archival Memory Journal",
     price: "₹1,850",
     image: "/images/memory_book.png",
-    category: "Hand-Bound Books",
+    category: "Hand-Bound Journals & Scrapbooks",
     description: "Japanese stab stitching using silk thread. Archival paper that welcomes both ink and watercolor. A legacy for your physical soul.",
     deliveryTime: "10-15 business days"
+  },
+  "personalised-journal": {
+    id: "personalised-journal",
+    name: "Personalised Journal or Scrapbook",
+    price: "From ₹1,499",
+    image: "/images/personalised-journal/journal_cover.jpg",
+    category: "Hand-Bound Journals & Scrapbooks",
+    description: "A5 hand-bound bespoke book crafted for your most intimate memories. Each page is a canvas for your story, layered with collage work and personalized elements.",
+    deliveryTime: "12-15 business days",
+    images: [
+      "/images/personalised-journal/journal_cover.jpg",
+      "/images/personalised-journal/journal_page_1.jpg",
+      "/images/personalised-journal/journal_page_2.jpg",
+      "/images/personalised-journal/journal_page_3.jpg",
+      "/images/personalised-journal/journal_page_4.jpg"
+    ],
+    includes: [
+      "Complete collage work on each side as required",
+      "Option to add pictures, quotes, and personalised elements",
+      "Special dates, hashtags, and hidden pockets",
+      "A5 size, premium archival-grade paper",
+      "Artisanal hand-bound finish"
+    ],
+    variants: [
+      { id: "v1", label: "2 Pages (4 Sides)", price: 1499 },
+      { id: "v2", label: "3 Pages (6 Sides)", price: 2399 },
+      { id: "v3", label: "4 Pages (8 Sides)", price: 3000 },
+      { id: "v4", label: "5 Pages (10 Sides)", price: 3999 }
+    ]
   },
   "scroll-1": {
     id: "scroll-1",
