@@ -1,62 +1,193 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-
+import { products, Product } from "@/data/products";
 
 export function Navigation() {
   const { cart, cartCount, cartTotal, removeFromCart, addToCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = Object.values(products).filter((p) => 
+      p.name.toLowerCase().includes(query) || 
+      p.category.toLowerCase().includes(query) ||
+      p.description.toLowerCase().includes(query)
+    );
+    setSearchResults(filtered);
+  }, [searchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <>
-      <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-foreground/5 py-4 px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Left: Nav Links */}
-          <div className="hidden md:flex gap-8 items-center text-xs uppercase tracking-[0.2em] font-sans font-bold text-foreground/60">
-            <Link href="/shop" className="hover:text-secondary transition-colors">Shop</Link>
-            <Link href="/about" className="hover:text-secondary transition-colors">Our Story</Link>
-          </div>
+      <nav className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-md border-b border-foreground/5">
+        {/* Single Row: Logo | Filter Links | Icons */}
+        <div className="w-full flex items-center justify-between px-16 py-3 gap-6 overflow-visible">
 
-          {/* Center: Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <Link href="/" className="font-serif text-2xl lg:text-3xl tracking-tighter hover:opacity-80 transition-opacity">
-              CraftswomanAlley
+          {/* LEFT: Logo */}
+          <Link href="/" className="font-serif text-xl lg:text-2xl tracking-tighter hover:opacity-80 transition-opacity flex-shrink-0">
+            CraftswomanAlley
+          </Link>
+
+          {/* CENTER: Filter Nav Links — always visible, no scroll */}
+          <div className="hidden md:flex items-center gap-6 flex-1 justify-center">
+            <Link href="/shop" className="text-[11px] font-black uppercase tracking-[0.22em] text-foreground hover:text-secondary transition-colors whitespace-nowrap">
+              Shop Now
             </Link>
+            {[
+              { label: "Personalised Gifts", href: "/shop/books", items: [
+                { name: "Journals & Scrapbooks", href: "/shop/books" },
+                { name: "Custom Sketches", href: "/shop/sketches" },
+                { name: "Resin Art", href: "/shop/resin" },
+              ]},
+              { label: "Birthday Gifts", href: "/shop/flowers", items: [
+                { name: "Velvet Bouquets", href: "/shop/flowers" },
+                { name: "Artisan Candles", href: "/shop/candles" },
+                { name: "Handmade Cards", href: "/shop/cards" },
+              ]},
+              { label: "Anniversary Gifts", href: "/shop/scrolls", items: [
+                { name: "Letter Scrolls", href: "/shop/scrolls" },
+                { name: "Memory Journals", href: "/shop/books" },
+                { name: "Gift Hampers", href: "/shop/hampers" },
+              ]},
+              { label: "Corporate Gifting", href: "/shop/corporate", items: [
+                { name: "Corporate Hampers", href: "/shop/corporate" },
+                { name: "Torans & Decor", href: "/shop/toran" },
+                { name: "Jewellery Sets", href: "/shop/jewellery" },
+              ]},
+            ].map((group) => (
+              <div key={group.label} className="relative group/nav flex-shrink-0">
+                <button className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/60 hover:text-foreground transition-colors whitespace-nowrap py-2 flex items-center gap-1.5 border-b-2 border-transparent hover:border-secondary">
+                  {group.label}
+                  <svg className="w-2.5 h-2.5 opacity-50 transition-transform duration-200 group-hover/nav:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {/* Dropdown — rendered in fixed stacking context, never clipped */}
+                <div className="absolute top-[calc(100%+4px)] left-0 bg-white rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-foreground/8 py-2 min-w-[210px] z-[200] opacity-0 pointer-events-none group-hover/nav:opacity-100 group-hover/nav:pointer-events-auto transition-all duration-200 translate-y-2 group-hover/nav:translate-y-0">
+                  <div className="px-4 py-2 border-b border-foreground/5 mb-1">
+                    <Link href={group.href} className="text-[10px] font-black uppercase tracking-[0.28em] text-secondary block hover:opacity-70 transition-opacity">
+                      View All {group.label} →
+                    </Link>
+                  </div>
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="block px-4 py-2.5 text-sm font-medium text-foreground/65 hover:text-foreground hover:bg-surface/60 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Right: Icons & Search */}
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center bg-surface/50 rounded-full px-4 py-1.5 border border-foreground/5 group focus-within:border-secondary transition-all">
-              <input 
-                type="text" 
-                placeholder="Search our alley..." 
-                className="bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-xs w-32 placeholder:text-foreground/30 font-sans font-medium"
-              />
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-foreground/40 group-focus-within:text-secondary">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-              </svg>
+          {/* RIGHT: Search + Icons */}
+          <div className="flex items-center gap-5 flex-shrink-0">
+            <div ref={searchRef} className="relative hidden lg:block">
+              <div className={`flex items-center bg-surface/50 rounded-full px-4 py-1.5 border transition-all duration-300
+                ${isSearchFocused ? "border-secondary w-56 shadow-lg bg-white" : "border-foreground/10 w-40"}
+              `}>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  className="bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-xs w-full placeholder:text-foreground/30 font-sans font-medium"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-colors flex-shrink-0 ${isSearchFocused ? "text-secondary" : "text-foreground/30"}`}>
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+              </div>
+
+              {/* Search Results */}
+              {(isSearchFocused && (searchQuery.length > 0 || searchResults.length > 0)) && (
+                <div className="absolute top-full mt-3 right-0 w-80 bg-white border border-foreground/5 rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="max-h-[400px] overflow-y-auto p-2 no-scrollbar">
+                    {searchResults.length > 0 ? (
+                      <div className="space-y-1">
+                        <p className="px-3 py-2 text-[10px] font-sans font-bold uppercase tracking-widest text-foreground/30 border-b border-foreground/5 mb-2">
+                          Results for &quot;{searchQuery}&quot;
+                        </p>
+                        {searchResults.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={`/shop/product/${product.id}`}
+                            onClick={() => { setIsSearchFocused(false); setSearchQuery(""); }}
+                            className="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors group/res"
+                          >
+                            <div className="w-12 h-14 bg-surface rounded-lg overflow-hidden relative shrink-0">
+                              <Image src={product.image} alt={product.name} fill className="object-cover" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-serif text-sm truncate group-hover/res:text-secondary transition-colors">{product.name}</h4>
+                              <p className="text-[10px] text-foreground/40 font-sans font-bold uppercase tracking-tight">{product.category}</p>
+                              <p className="text-[11px] text-secondary font-bold font-sans mt-0.5">{typeof product.price === "number" ? `₹${product.price.toLocaleString()}` : product.price}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center space-y-2">
+                        <p className="font-serif italic text-foreground/40">No treasures found...</p>
+                        <p className="text-[10px] uppercase font-sans font-bold tracking-widest text-foreground/20">Try &quot;Journal&quot; or &quot;Bloom&quot;</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            
-            <div className="flex items-center gap-5 text-foreground/70">
+
+            <div className="flex items-center gap-4 text-foreground/70">
               <Link href="/contact" className="hover:text-secondary transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
               </Link>
-              <button 
-                onClick={() => setIsCartOpen(true)}
-                className="relative hover:text-secondary transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <button onClick={() => setIsCartOpen(true)} className="relative hover:text-secondary transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-secondary text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                  <span className="absolute -top-2 -right-2 bg-secondary text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
               </button>
             </div>
           </div>
+
+        </div>
+
+        {/* Announcement Strip */}
+        <div className="bg-foreground text-white text-[10px] font-black uppercase tracking-[0.35em] py-2 text-center">
+          Free Shipping on orders above ₹999 &nbsp;·&nbsp; Use code <span className="text-secondary">ALLEY10</span> for 10% off
         </div>
       </nav>
 
