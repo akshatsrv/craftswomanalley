@@ -46,10 +46,10 @@ export const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto pt-12 border-t border-foreground/5 flex flex-col md:flex-row justify-between items-center gap-8">
-        <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">© 2024 CraftswomanAlley. All Rights Reserved.</p>
+        <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">© 2026 CraftswomanAlley. All Rights Reserved.</p>
         <div className="flex gap-8 text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">
-          <Link href="#" className="hover:text-foreground">Privacy Policy</Link>
-          <Link href="#" className="hover:text-foreground">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
+          <Link href="/legal" className="hover:text-foreground">Terms of Service</Link>
         </div>
       </div>
     </footer>

@@ -23,6 +23,7 @@ export default function ScrollDetailPage({ params }: { params: Promise<{ id: str
   const handleAddToCart = () => {
     addToCart({
       ...item,
+      price: typeof item.price === "number" ? `₹${item.price.toLocaleString()}` : item.price,
       quantity: 1,
       personalization: personalization
     });
