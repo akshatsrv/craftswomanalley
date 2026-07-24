@@ -14,6 +14,7 @@ export const Footer = () => {
               width={220} 
               height={99} 
               className="h-12 md:h-14 lg:h-15 w-auto object-contain"
+              unoptimized
             />
           </Link>
           <p className="text-sm font-sans text-foreground/50 leading-relaxed font-medium">

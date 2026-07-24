@@ -55,6 +55,7 @@ export function Navigation() {
               height={90} 
               className="h-8 sm:h-9 md:h-10 lg:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               priority
+              unoptimized
             />
           </Link>
 
