@@ -43,8 +43,8 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch h-[62vh]">
             <div className="lg:col-span-8 relative rounded-[2rem] overflow-hidden group">
               <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-[3000ms] group-hover:scale-105"
-                style={{ backgroundImage: `url('/images/products/B0G4H47NVJ/img_1.jpg')` }}
+                className="absolute inset-0 bg-cover bg-top transition-transform duration-[3000ms] group-hover:scale-105"
+                style={{ backgroundImage: `url('/images/products/B0G4H47NVJ/img_2.jpg')` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               <div className="absolute inset-0 p-10 flex flex-col justify-end text-white">
