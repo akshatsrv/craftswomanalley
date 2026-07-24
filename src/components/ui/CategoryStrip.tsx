@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 
 const categories = [
-  { name: "Flowers", img: "/images/velvet_tulip.png", href: "/shop/flowers" },
+  { name: "Flowers", img: "/images/products/B0H2HGTNSM/img_1.jpg", href: "/shop/flowers" },
   { name: "Scrolls", img: "/images/hero_scroll.png", href: "/shop/scrolls" },
   { name: "Journals", img: "/images/personalised-journal/journal_cover.jpg", href: "/shop/books" },
   { name: "Hampers", img: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg", href: "/shop/hampers" },

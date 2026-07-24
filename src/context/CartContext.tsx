@@ -74,13 +74,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = React.useCallback(() => setCart([]), []);
 
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = cart.reduce((acc, item) => acc + (item?.quantity || 1), 0);
   
   const cartTotal = cart.reduce((acc, item) => {
-    // Improved price parsing: remove currency symbols and commas, handle decimals
-    const priceCleaned = item.price.replace(/[^\d.]/g, '');
+    if (!item) return acc;
+    const priceStr = String(item.price || '');
+    const priceCleaned = priceStr.replace(/[^\d.]/g, '');
     const priceNum = parseFloat(priceCleaned);
-    return acc + (isNaN(priceNum) ? 0 : priceNum * item.quantity);
+    const qty = item.quantity || 1;
+    return acc + (isNaN(priceNum) ? 0 : priceNum * qty);
   }, 0);
 
   return (

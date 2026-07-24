@@ -3,7 +3,7 @@ import { Footer } from "@/components/ui/Footer";
 import Link from "next/link";
 
 const categories = [
-  { name: "Bouquets & Flowers", count: "12 Items", href: "/shop/flowers", image: "/images/velvet_tulip.png" },
+  { name: "Bouquets & Flowers", count: "12 Items", href: "/shop/flowers", image: "/images/products/B0H2HGTNSM/img_1.jpg" },
   { name: "Antique Scrolls", count: "8 Items", href: "/shop/scrolls", image: "/images/hero_scroll.png" },
   { name: "Hand-Bound Journals & Scrapbooks", count: "Bespoke", href: "/shop/books/personalised-journal", image: "/images/personalised-journal/journal_cover.jpg" },
   { name: "Gift Hampers", count: "10 Items", href: "/shop/hampers", image: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg" },

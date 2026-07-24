@@ -16,8 +16,8 @@ const occasions = [
 export default function Home() {
   const trendingProducts = [
     products["personalised-journal"],
-    products["flower-1"],
-    products["scroll-1"],
+    products["flower-lavender-large"],
+    products["scroll-embroidery-royal"],
     products["candle-1"],
   ].filter(Boolean);
 
@@ -69,7 +69,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-grow relative rounded-[2rem] overflow-hidden">
-                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/velvet_tulip.png')" }} />
+                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/products/B0H2HGTNSM/img_1.jpg')" }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent" />
                 <div className="absolute inset-6 flex flex-col justify-end">
                   <p className="text-white font-serif italic text-xl mb-1">Ever-lasting</p>
@@ -116,10 +116,18 @@ export default function Home() {
                   className="group relative flex-shrink-0 w-56 h-72 rounded-[1.8rem] overflow-hidden bg-surface shadow-sm"
                 >
                   <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${product.image})` }} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute inset-x-5 bottom-5">
-                    <p className="text-white text-xs font-black uppercase tracking-[0.2em] leading-snug">{product.name}</p>
-                    <p className="text-white/80 text-sm font-serif italic mt-1">{typeof product.price === "number" ? `₹${product.price}` : product.price}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                  
+                  {/* Top-Left Prominent Price Badge */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-foreground text-white font-sans text-xs font-black px-3.5 py-1.5 rounded-full shadow-md tracking-wide">
+                      {typeof product.price === "number" ? `₹${product.price.toLocaleString()}` : (String(product.price).startsWith('₹') ? product.price : `₹${product.price}`)}
+                    </span>
+                  </div>
+
+                  {/* Frosted Glass Title Pill */}
+                  <div className="absolute inset-x-3 bottom-3 px-3 py-2.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 text-center">
+                    <p className="text-foreground text-xs font-serif font-extrabold leading-snug truncate">{product.name}</p>
                   </div>
                 </Link>
               ))}
@@ -145,10 +153,18 @@ export default function Home() {
                   className="group relative flex-shrink-0 w-56 h-72 rounded-[1.8rem] overflow-hidden bg-surface shadow-sm"
                 >
                   <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${product.image})` }} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute inset-x-5 bottom-5">
-                    <p className="text-white text-xs font-black uppercase tracking-[0.2em] leading-snug">{product.name}</p>
-                    <p className="text-white/80 text-sm font-serif italic mt-1">{typeof product.price === "number" ? `₹${product.price}` : product.price}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                  
+                  {/* Top-Left Prominent Price Badge */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-foreground text-white font-sans text-xs font-black px-3.5 py-1.5 rounded-full shadow-md tracking-wide">
+                      {typeof product.price === "number" ? `₹${product.price.toLocaleString()}` : (String(product.price).startsWith('₹') ? product.price : `₹${product.price}`)}
+                    </span>
+                  </div>
+
+                  {/* Frosted Glass Title Pill */}
+                  <div className="absolute inset-x-3 bottom-3 px-3 py-2.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 text-center">
+                    <p className="text-foreground text-xs font-serif font-extrabold leading-snug truncate">{product.name}</p>
                   </div>
                 </Link>
               ))}

@@ -22,9 +22,9 @@ export function Navigation() {
 
     const query = searchQuery.toLowerCase();
     const filtered = Object.values(products).filter((p) => 
-      p.name.toLowerCase().includes(query) || 
-      p.category.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query)
+      p?.name?.toLowerCase().includes(query) || 
+      p?.category?.toLowerCase().includes(query) ||
+      p?.description?.toLowerCase().includes(query)
     );
     setSearchResults(filtered);
   }, [searchQuery]);
@@ -44,11 +44,18 @@ export function Navigation() {
     <>
       <nav className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-md border-b border-foreground/5">
         {/* Single Row: Logo | Filter Links | Icons */}
-        <div className="w-full flex items-center justify-between px-16 py-3 gap-6 overflow-visible">
+        <div className="w-full flex items-center justify-between px-6 md:px-10 lg:px-12 py-2.5 gap-6 overflow-visible">
 
           {/* LEFT: Logo */}
-          <Link href="/" className="font-serif text-xl lg:text-2xl tracking-tighter hover:opacity-80 transition-opacity flex-shrink-0">
-            CraftswomanAlley
+          <Link href="/" className="flex items-center hover:opacity-90 transition-opacity flex-shrink-0 group">
+            <Image 
+              src="/images/logo-transparent.png" 
+              alt="Craftswoman Alley" 
+              width={200} 
+              height={90} 
+              className="h-8 sm:h-9 md:h-10 lg:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              priority
+            />
           </Link>
 
           {/* CENTER: Filter Nav Links — always visible, no scroll */}
@@ -261,8 +268,8 @@ export function Navigation() {
                     ) : (
                       // Default trending items if no specific match
                       [
-                        { id: 'scroll-1', name: "Parchment Scroll", price: "₹899", image: "/images/hero_scroll.png" },
-                        { id: 'flower-1', name: "Velvet Tulip", price: "₹499", image: "/images/velvet_tulip.png" }
+                        { id: 'scroll-embroidery-royal', name: "Royal Parchment Scroll", price: "₹499", image: "/images/products/B0G4H72ZYC/img_1.jpg" },
+                        { id: 'flower-lavender-large', name: "Lavender Bouquet", price: "₹999", image: "/images/products/B0H2HGTNSM/img_1.jpg" }
                       ].map(rec => (
                         <div key={rec.id} className="flex-shrink-0 w-32 space-y-2 group/rec">
                           <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface relative">

@@ -22,7 +22,7 @@ export function ProductCard({
   aspectRatio = "aspect-square",
   href,
 }: ProductCardProps) {
-  const displayPrice = typeof price === 'number' ? `₹${price.toLocaleString()}` : price;
+  const displayPrice = typeof price === 'number' ? `₹${price.toLocaleString()}` : (String(price || '').startsWith('₹') ? String(price) : `₹${price}`);
   const { cart, addToCart, decreaseQuantity } = useCart();
 
   const cartItem = cart.find((item) => item.id === id);
@@ -36,10 +36,15 @@ export function ProductCard({
           style={{ backgroundImage: `url(${image})` }}
         />
         
-        {/* Posterized Style Badge */}
-        <div className="absolute top-5 left-5 z-10">
+        {/* Category & Price Badges */}
+        <div className="absolute top-4 left-4 z-10">
             <span className="bg-white/95 backdrop-blur-md px-3 py-1 text-[8px] uppercase tracking-[0.3em] font-black text-secondary rounded-full shadow-sm">
                 {category || "Original"}
+            </span>
+        </div>
+        <div className="absolute top-4 right-4 z-10">
+            <span className="bg-foreground text-white px-3 py-1 text-xs font-sans font-bold rounded-xl shadow-md">
+                {displayPrice}
             </span>
         </div>
 
@@ -84,11 +89,11 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="space-y-1.5 px-1">
-        <h3 className="font-serif text-lg text-foreground font-semibold tracking-tight leading-snug group-hover:text-secondary transition-colors duration-300">
+      <div className="space-y-1 px-1">
+        <h3 className="font-serif text-lg text-foreground font-semibold tracking-tight leading-snug group-hover:text-secondary transition-colors duration-300 line-clamp-2">
           {name}
         </h3>
-        <p className="font-sans text-sm font-bold text-foreground tracking-wide">{displayPrice}</p>
+        <p className="font-sans text-base font-black text-secondary tracking-wide">{displayPrice}</p>
       </div>
     </>
   );

@@ -85,12 +85,12 @@ button {
 }
 
 .marquee-track {
-  animation: marquee 35s linear infinite;
+  animation: marquee 60s linear infinite;
   will-change: transform;
 }
 
 .marquee-track-reverse {
-  animation: marquee-reverse 40s linear infinite;
+  animation: marquee-reverse 65s linear infinite;
   will-change: transform;
 }
 
