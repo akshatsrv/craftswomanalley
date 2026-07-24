@@ -16,8 +16,13 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "CraftswomanAlley | Elevated Craft for the Physical Soul",
+  title: "Craftswoman Alley | Elevated Craft for the Physical Soul",
   description: "Premium artisan marketplace for handcrafted paper goods, memory books, and eternal blooms.",
+  icons: {
+    icon: "/images/logo-transparent.png",
+    shortcut: "/images/logo-transparent.png",
+    apple: "/images/logo-transparent.png",
+  },
 };
 
 import { CartProvider } from "@/context/CartContext";
@@ -32,7 +37,7 @@ export default function RootLayout({
       <head>
         {/* Preload hero and critical above-the-fold images */}
         <link rel="preload" as="image" href="/images/hero_scroll.png" />
-        <link rel="preload" as="image" href="/images/velvet_tulip.png" />
+        <link rel="preload" as="image" href="/images/products/B0H2HGTNSM/img_1.jpg" />
         <link rel="preload" as="image" href="/images/scroll_stitched_real.jpg" />
         {/* Preconnect to external image CDNs for faster DNS + TLS */}
         <link rel="preconnect" href="https://images.unsplash.com" />

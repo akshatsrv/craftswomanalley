@@ -1,12 +1,21 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export const Footer = () => {
   return (
     <footer className="bg-surface/30 pt-24 pb-12 px-8 border-t border-foreground/5 noise-bg">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
         <div className="space-y-6">
-          <Link href="/" className="font-serif text-2xl tracking-tighter block">CraftswomanAlley</Link>
+          <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
+            <Image 
+              src="/images/logo-transparent.png" 
+              alt="Craftswoman Alley Logo" 
+              width={220} 
+              height={99} 
+              className="h-12 md:h-14 lg:h-15 w-auto object-contain"
+            />
+          </Link>
           <p className="text-sm font-sans text-foreground/50 leading-relaxed font-medium">
             Elevated craft for the physical soul. Hand-picked and heart-made treasures from our alley to yours.
           </p>
@@ -31,7 +40,7 @@ export const Footer = () => {
           <ul className="space-y-4 text-sm font-sans text-foreground/70 font-medium">
             <li><Link href="/shipping" className="hover:text-secondary transition-colors">Shipping & Returns</Link></li>
             <li><Link href="/faq" className="hover:text-secondary transition-colors">FAQ</Link></li>
-            <li><Link href="/contact" className="hover:text-secondary transition-colors">Bespeak Custom</Link></li>
+            <li><Link href="/bespeak" className="hover:text-secondary transition-colors">Bespeak Custom</Link></li>
           </ul>
         </div>
 
@@ -46,10 +55,10 @@ export const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto pt-12 border-t border-foreground/5 flex flex-col md:flex-row justify-between items-center gap-8">
-        <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">© 2024 CraftswomanAlley. All Rights Reserved.</p>
+        <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">© 2026 CraftswomanAlley. All Rights Reserved.</p>
         <div className="flex gap-8 text-[9px] uppercase tracking-[0.2em] font-bold text-foreground/30">
-          <Link href="#" className="hover:text-foreground">Privacy Policy</Link>
-          <Link href="#" className="hover:text-foreground">Terms of Service</Link>
+          <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
+          <Link href="/legal" className="hover:text-foreground">Terms of Service</Link>
         </div>
       </div>
     </footer>

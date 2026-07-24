@@ -3,13 +3,11 @@
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
-
-const products = [
-  { id: "hamper-1", name: "The Wedding Grand Luxe Box", price: "₹4,850", image: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg" },
-  { id: "hamper-2", name: "Artisanal Celebration Trunk", price: "₹3,150", image: "https://i.pinimg.com/736x/58/14/4d/58144d3d1d642b348ac4a7301a950902.jpg" },
-];
+import { products } from "@/data/products";
 
 export default function HampersPage() {
+  const items = Object.values(products).filter(p => p.category === "Gift Hampers");
+
   return (
     <div className="min-h-screen flex flex-col noise-bg">
       <Navigation />
@@ -20,7 +18,7 @@ export default function HampersPage() {
           <p className="font-serif italic text-xl text-foreground/40 max-w-xl mx-auto">Collections of small joys, bundled with a physical soul.</p>
         </header>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
-          {products.map((item) => (
+          {items.map((item) => (
             <ProductCard key={item.id} {...item} />
           ))}
         </div>

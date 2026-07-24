@@ -1,11 +1,60 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import Script from "next/script";
+
+// Add declaration for Razorpay global
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
+const GST_RATE = 0.18;
+
+const STATE_GST_CODES: Record<string, string> = {
+  "jammu and kashmir": "01",
+  "himachal pradesh": "02",
+  "punjab": "03",
+  "chandigarh": "04",
+  "uttarakhand": "05",
+  "haryana": "06",
+  "delhi": "07",
+  "rajasthan": "08",
+  "uttar pradesh": "09",
+  "bihar": "10",
+  "sikkim": "11",
+  "arunachal pradesh": "12",
+  "nagaland": "13",
+  "manipur": "14",
+  "mizoram": "15",
+  "tripura": "16",
+  "meghalaya": "17",
+  "assam": "18",
+  "west bengal": "19",
+  "jharkhand": "20",
+  "odisha": "21",
+  "chhattisgarh": "22",
+  "madhya pradesh": "23",
+  "gujarat": "24",
+  "maharashtra": "27",
+  "andhra pradesh": "37",
+  "karnataka": "29",
+  "goa": "30",
+  "lakshadweep": "31",
+  "kerala": "32",
+  "tamil nadu": "33",
+  "puducherry": "34",
+  "andaman and nicobar islands": "35",
+  "telangana": "36",
+  "ladakh": "38",
+  "dadra and nagar haveli and daman and diu": "26"
+};
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -37,6 +86,7 @@ const validators: Record<string, (value: string) => string | null> = {
     if (!emailRegex.test(trimmed)) return "Invalid email";
     return null;
   },
+  confirmEmail: (v) => (v.trim() ? null : "Required"),
   phone: (v) => {
     const digits = v.replace(/\D/g, "");
     if (!digits) return "Required";
@@ -55,9 +105,22 @@ const validators: Record<string, (value: string) => string | null> = {
   },
 };
 
-type FormField = "name" | "email" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
+type FormField = "name" | "email" | "confirmEmail" | "phone" | "houseNumber" | "streetAddress" | "city" | "state" | "pincode";
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
+
+function ProcessingOverlay({ status }: { status: string }) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-500">
+      <div className="relative w-24 h-24 mb-8">
+        <div className="absolute inset-0 border-t-2 border-neutral-900 rounded-full animate-spin"></div>
+        <div className="absolute inset-4 border-b-2 border-neutral-200 rounded-full animate-[spin_2s_linear_infinite_reverse]"></div>
+      </div>
+      <h2 className="font-serif text-2xl tracking-tighter mb-2">{status}</h2>
+      <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold">Please do not refresh or close this window</p>
+    </div>
+  );
+}
 
 function FormInput({
   label,
@@ -89,13 +152,13 @@ function FormInput({
   const hasError = touched && error;
 
   return (
-    <div className="flex flex-col gap-1.5 min-w-0">
-      <label htmlFor={field} className="text-[11px] font-sans font-extrabold uppercase tracking-[0.12em] text-neutral-500/80">
+    <div className="flex flex-col gap-1 min-w-0">
+      <label htmlFor={field} className="text-[10px] font-sans font-bold uppercase tracking-[0.15em] text-neutral-400">
         {label}
       </label>
-      <div className="relative group">
+      <div className="relative">
         {isPhone && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-sm pointer-events-none">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-sans font-medium text-neutral-400 text-[13px] pointer-events-none">
             +91
           </span>
         )}
@@ -113,24 +176,24 @@ function FormInput({
           }}
           onBlur={() => onBlur(field)}
           autoComplete="off"
-          className={`w-full bg-white rounded-lg py-3.5 px-4 font-sans text-[14px] transition-all border
-            ${isPhone ? "pl-12" : "pl-4"}
+          className={`w-full bg-white rounded-md py-2 px-3.5 font-sans text-[13px] transition-all border
+            ${isPhone ? "pl-11" : "pl-3.5"}
             ${
               hasError
-                ? "border-red-300 bg-red-50/10 focus:ring-1 focus:ring-red-400 focus:outline-none"
-                : "border-neutral-200 focus:border-accent/40 focus:ring-1 focus:ring-accent/10 focus:outline-none"
+                ? "border-red-500 bg-red-50/10 focus:outline-none outline-none"
+                : "border-neutral-200 focus:border-neutral-900 focus:outline-none outline-none"
             }
-            hover:border-neutral-300 placeholder:text-neutral-300 placeholder:font-light`}
+            hover:border-neutral-300 placeholder:text-neutral-300`}
         />
         {isLoading && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <div className="w-3.5 h-3.5 border-2 border-neutral-100 border-t-accent rounded-full animate-spin"></div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="w-3 h-3 border-2 border-neutral-100 border-t-accent rounded-full animate-spin"></div>
           </div>
         )}
       </div>
       {children}
       {hasError && (
-        <p className="text-[10px] text-red-500 font-bold px-1 uppercase tracking-tight mt-0.5">
+        <p className="text-[9px] text-red-500 font-bold px-0.5 uppercase tracking-tighter">
           {error}
         </p>
       )}
@@ -143,6 +206,7 @@ function FormInput({
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart } = useCart();
   const router = useRouter();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingCity, setIsFetchingCity] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -150,16 +214,56 @@ export default function CheckoutPage() {
   const [addressSuggestions, setAddressSuggestions] = useState<PhotonSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const [processingStatus, setProcessingStatus] = useState<string>("");
+
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "cancelled" | "failed">("idle");
+
   const [formData, setFormData] = useState<Record<FormField, string>>({
-    name: "", email: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
+    name: "", email: "", confirmEmail: "", phone: "", houseNumber: "", streetAddress: "", city: "", state: "", pincode: "",
   });
 
+  // Tax calculations
+  const taxAmount = Math.round(cartTotal * GST_RATE);
+  const grandTotal = cartTotal + taxAmount;
+
+  const [showTaxBreakdown, setShowTaxBreakdown] = useState(false);
+  const userStateKey = formData.state?.toLowerCase().trim() || "";
+  const userStateCode = STATE_GST_CODES[userStateKey] || "";
+  const isRajasthan = userStateCode === "08";
+  
+  const cgst = isRajasthan ? Math.floor(taxAmount / 2) : 0;
+  const sgst = isRajasthan ? taxAmount - cgst : 0;
+  const igst = !isRajasthan ? taxAmount : 0;
+
+  const [isFormLoaded, setIsFormLoaded] = useState(false);
+
+  // Load persisted data on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("cwa_checkout_form");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error("Failed to parse saved form data", e);
+      }
+    }
+    setIsFormLoaded(true);
+  }, []);
+
+  // Save data on change - only after initial load is complete
+  useEffect(() => {
+    if (isFormLoaded) {
+      localStorage.setItem("cwa_checkout_form", JSON.stringify(formData));
+    }
+  }, [formData, isFormLoaded]);
+
   const [errors, setErrors] = useState<Record<FormField, string | null>>({
-    name: null, email: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
+    name: null, email: null, confirmEmail: null, phone: null, houseNumber: null, streetAddress: null, city: null, state: null, pincode: null,
   });
 
   const [touched, setTouched] = useState<Record<FormField, boolean>>({
-    name: false, email: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
+    name: false, email: false, confirmEmail: false, phone: false, houseNumber: false, streetAddress: false, city: false, state: false, pincode: false,
   });
 
   const searchAddress = useCallback(
@@ -220,7 +324,14 @@ export default function CheckoutPage() {
 
   const handleBlur = (field: FormField) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    setErrors((prev) => ({ ...prev, [field]: validators[field](formData[field]) }));
+    let error = validators[field](formData[field]);
+    
+    // Custom cross-field validation for confirmEmail
+    if (field === "confirmEmail" && !error && formData.confirmEmail.trim() !== formData.email.trim()) {
+      error = "Emails do not match";
+    }
+    
+    setErrors((prev) => ({ ...prev, [field]: error }));
     if (field === "streetAddress") {
       setTimeout(() => setShowSuggestions(false), 200);
     }
@@ -228,7 +339,13 @@ export default function CheckoutPage() {
 
   const handleSelectSuggestion = (suggestion: PhotonSuggestion) => {
     const p = suggestion.properties;
-    const street = [p.name, p.street].filter(Boolean).join(", ");
+    // Combine name, street, and district for a full street/area description
+    // District often contains important locality info in India (like Sector numbers)
+    const addressParts = [p.name, p.street, p.district].filter(Boolean);
+    // Remove duplicates (sometimes name or street might repeat district info)
+    const uniqueParts = addressParts.filter((item, index) => addressParts.indexOf(item) === index);
+    const street = uniqueParts.join(", ");
+    
     setFormData(prev => ({
       ...prev,
       streetAddress: street,
@@ -245,6 +362,7 @@ export default function CheckoutPage() {
     const newErrors: Record<FormField, string | null> = {
       name: validators.name(formData.name),
       email: validators.email(formData.email),
+      confirmEmail: formData.confirmEmail.trim() !== formData.email.trim() ? "Emails do not match" : null,
       phone: validators.phone(formData.phone),
       houseNumber: validators.houseNumber(formData.houseNumber),
       streetAddress: validators.streetAddress(formData.streetAddress),
@@ -252,7 +370,7 @@ export default function CheckoutPage() {
       state: validators.state(formData.state),
       pincode: validators.pincode(formData.pincode),
     };
-    setTouched({ name: true, email: true, phone: true, houseNumber: true, streetAddress: true, city: true, state: true, pincode: true });
+    setTouched({ name: true, email: true, confirmEmail: true, phone: true, houseNumber: true, streetAddress: true, city: true, state: true, pincode: true });
     setErrors(newErrors);
     return Object.values(newErrors).every((e) => e === null);
   };
@@ -260,108 +378,225 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    setPaymentStatus("idle");
+
     if (!validateAll()) return;
+    
     setIsSubmitting(true);
+    setPaymentStatus("processing");
+    setProcessingStatus("Preparing secure checkout...");
+
     try {
       const fullAddress = `${formData.houseNumber}, ${formData.streetAddress}`;
-      const response = await fetch("/api/order", {
+      const customerData = { ...formData, address: fullAddress };
+
+      // 1. Create Razorpay Order
+      const orderRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          customer: { ...formData, address: fullAddress }, 
-          items: cart, 
-          total: cartTotal 
-        }),
+        body: JSON.stringify({ amount: grandTotal }),
       });
-      if (response.ok) {
-        const data = await response.json();
-        clearCart();
-        router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}`);
-      } else {
-        setSubmitError("Something went wrong. Please try again.");
+
+      if (!orderRes.ok) {
+        throw new Error("We couldn't initialize the payment. Please try again or check your connection.");
       }
-    } catch {
-      setSubmitError("Check your internet connection.");
-    } finally {
+      
+      const { orderId, amount, currency } = await orderRes.json();
+      setProcessingStatus("Connecting to payment server...");
+
+      if (!window.Razorpay) {
+        throw new Error("Secure payment system failed to load. Please refresh the page and try again.");
+      }
+
+      // 2. Open Razorpay Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount,
+        currency,
+        name: "CraftswomanAlley",
+        description: `Order ID: ${orderId}`,
+        order_id: orderId,
+        handler: async (response: any) => {
+          setProcessingStatus("Verifying transaction details...");
+          // 3. Verify Payment
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                customer: customerData,
+                items: cart,
+                total: grandTotal,
+                taxAmount: taxAmount,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              const data = await verifyRes.json();
+              setProcessingStatus("Order finalized. Redirecting...");
+              localStorage.removeItem("cwa_checkout_form");
+              const hasPersonalisedItem = cart.some(item => 
+                item.name.toLowerCase().includes('journal') || 
+                item.name.toLowerCase().includes('scrapbook')
+              );
+              router.push(`/order-success?orderId=${data.orderId}&delivery=${encodeURIComponent(data.estimatedDelivery)}&paymentId=${data.paymentId}${hasPersonalisedItem ? '&personalised=true' : ''}`);
+            } else {
+              router.push(`/order-failed?type=verify&reason=${encodeURIComponent("Payment verification mismatch. Our team will contact you if money was deducted.")}`);
+            }
+          } catch (err) {
+            router.push(`/order-failed?type=error&reason=${encodeURIComponent("Network lost during verification. Please check your email for confirmation before retrying.")}`);
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: `+91${formData.phone}`,
+        },
+        theme: {
+          color: "#000000",
+        },
+        modal: {
+          confirm_close: true,
+          ondismiss: () => {
+            setProcessingStatus("");
+            setIsSubmitting(false);
+            setPaymentStatus("cancelled");
+            router.push(`/order-failed?type=cancel&reason=${encodeURIComponent("Payment was cancelled by the user.")}`);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        setProcessingStatus("");
+        setIsSubmitting(false);
+        router.push(`/order-failed?type=failure&reason=${encodeURIComponent(response.error.description)}`);
+      });
+      rzp.open();
+
+    } catch (err: any) {
+      setSubmitError(err.message || "An unexpected error occurred. Please try again.");
+      setPaymentStatus("failed");
       setIsSubmitting(false);
+      setProcessingStatus("");
     }
   };
 
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8">
-        <h1 className="font-serif text-3xl mb-4">Your Cart is Empty</h1>
-        <button onClick={() => router.push("/shop")} className="text-accent underline font-sans text-sm uppercase tracking-widest font-bold">
-          Go to Shop
+        <h1 className="font-serif text-2xl mb-2">Cart Empty</h1>
+        <button onClick={() => router.push("/shop")} className="text-accent underline text-xs font-bold uppercase tracking-widest">
+          Return to Treasures
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50/40">
+    <div className="min-h-screen bg-neutral-50/50">
       <Navigation />
+      {isSubmitting && processingStatus && <ProcessingOverlay status={processingStatus} />}
 
-      <main className="max-w-6xl mx-auto px-6 py-12 md:py-20 lg:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+      <main className="max-w-[1000px] mx-auto px-6 py-10 md:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
-          {/* Main Column */}
-          <div className="lg:col-span-7 space-y-12">
-            <header className="mb-8">
-              <h1 className="font-serif text-[42px] text-neutral-900 leading-tight">Checkout</h1>
+          {/* Form Column */}
+          <div className="lg:col-span-7 space-y-8">
+            <header>
+              <h1 className="font-serif text-3xl text-neutral-900 tracking-tight">Checkout</h1>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-12">
-              {/* Contact */}
-              <div className="space-y-7">
-                <p className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">01. Personal Information</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-10">
+              {/* Payment Status Alerts (Amazon Style) */}
+              {(submitError || paymentStatus === "cancelled" || paymentStatus === "failed") && (
+                <div className={`p-4 rounded-md border flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+                  paymentStatus === "cancelled" 
+                    ? "bg-amber-50 border-amber-100 text-amber-800" 
+                    : "bg-red-50 border-red-100 text-red-800"
+                }`}>
+                  <div className="shrink-0 mt-0.5">
+                    {paymentStatus === "cancelled" ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 17c-.77 1.333.192 3 1.732 3z"/></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-tight">
+                      {paymentStatus === "cancelled" ? "Payment Cancelled" : "Payment Action Required"}
+                    </p>
+                    <p className="text-[12px] opacity-90 leading-snug">
+                      {submitError}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Profile */}
+              <div className="space-y-5">
+                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Personal Information</p>
+                <div className="space-y-4">
                   <FormInput
                     label="Full Name"
                     field="name"
-                    placeholder="E.g. Aarav Sharma"
+                    placeholder="Aarav Sharma"
                     value={formData.name}
                     error={errors.name}
                     touched={touched.name}
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <FormInput
-                    label="Email Address"
-                    field="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={formData.email}
-                    error={errors.email}
-                    touched={touched.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormInput
-                      label="Contact Number"
-                      field="phone"
-                      type="tel"
-                      placeholder="XXXXXXXXXX"
-                      value={formData.phone}
-                      error={errors.phone}
-                      touched={touched.phone}
+                      label="Email Address"
+                      field="email"
+                      type="email"
+                      placeholder="e.g. name@example.com"
+                      value={formData.email}
+                      error={errors.email}
+                      touched={touched.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      isPhone={true}
+                    />
+                    <FormInput
+                      label="Confirm Email"
+                      field="confirmEmail"
+                      type="email"
+                      placeholder="Repeat email address"
+                      value={formData.confirmEmail}
+                      error={errors.confirmEmail}
+                      touched={touched.confirmEmail}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                     />
                   </div>
+                  <FormInput
+                    label="Contact Number"
+                    field="phone"
+                    type="tel"
+                    placeholder="9876543210"
+                    value={formData.phone}
+                    error={errors.phone}
+                    touched={touched.phone}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isPhone={true}
+                  />
                 </div>
               </div>
 
-              {/* Shipping */}
-              <div className="space-y-7">
-                <p className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">02. Shipping Destination</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Destination */}
+              <div className="space-y-5">
+                <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Shipping Destination</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput
-                    label="House / Flat No."
+                    label="House/Flat No."
                     field="houseNumber"
-                    placeholder="E.g. Unit 402"
+                    placeholder="e.g. 102, Block A"
                     value={formData.houseNumber}
                     error={errors.houseNumber}
                     touched={touched.houseNumber}
@@ -370,9 +605,9 @@ export default function CheckoutPage() {
                   />
                   <div className="relative">
                     <FormInput
-                      label="Street / Area Name"
+                      label="Street/Area"
                       field="streetAddress"
-                      placeholder="Start typing your area..."
+                      placeholder="Type your locality..."
                       value={formData.streetAddress}
                       error={errors.streetAddress}
                       touched={touched.streetAddress}
@@ -381,96 +616,83 @@ export default function CheckoutPage() {
                       isLoading={isSearchingAddress}
                     >
                       {showSuggestions && (
-                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-xl rounded-lg mt-1 overflow-hidden">
+                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-neutral-100 shadow-lg rounded-md mt-1 overflow-hidden">
                           {addressSuggestions.map((s, i) => (
                             <button
                               key={i}
                               type="button"
                               onClick={() => handleSelectSuggestion(s)}
-                              className="w-full px-4 py-3.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
+                              className="w-full px-3 py-2.5 text-left hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none outline-none transition-colors border-b border-neutral-50 last:border-0"
                             >
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-[14px] font-medium text-neutral-800 line-clamp-1">
-                                  {[s.properties.name, s.properties.street].filter(Boolean).join(", ")}
-                                </span>
-                                <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
-                                  {[s.properties.district, s.properties.city, s.properties.state].filter(Boolean).join(" • ")}
-                                </span>
-                              </div>
+                              <p className="text-[13px] font-medium text-neutral-800 line-clamp-1">
+                                {[s.properties.name, s.properties.street, s.properties.district].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", ")}
+                              </p>
+                              <p className="text-[9px] text-neutral-400 uppercase tracking-wide">
+                                {[s.properties.city, s.properties.state].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(" • ")}
+                              </p>
                             </button>
                           ))}
                         </div>
                       )}
                     </FormInput>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
                     <FormInput
-                      label="PIN Code"
+                      label="Pincode"
                       field="pincode"
-                      placeholder="6 Digits"
+                      placeholder="6 digits"
                       value={formData.pincode}
                       error={errors.pincode}
                       touched={touched.pincode}
                       onChange={handleChange}
                       onBlur={handleBlur}
                     />
-                    <FormInput 
-                      label="City" 
-                      field="city" 
-                      placeholder="City" 
-                      value={formData.city} 
-                      error={errors.city} 
-                      touched={touched.city} 
-                      onChange={handleChange} 
-                      onBlur={handleBlur}
-                      isLoading={isFetchingCity}
-                    />
-                    <FormInput 
-                      label="State" 
-                      field="state" 
-                      placeholder="State" 
-                      value={formData.state} 
-                      error={errors.state} 
-                      touched={touched.state} 
-                      onChange={handleChange} 
-                      onBlur={handleBlur}
-                      isLoading={isFetchingCity}
-                    />
+                    <FormInput label="City" field="city" placeholder="City" value={formData.city} error={errors.city} touched={touched.city} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
+                    <FormInput label="State" field="state" placeholder="State" value={formData.state} error={errors.state} touched={touched.state} onChange={handleChange} onBlur={handleBlur} isLoading={isFetchingCity} />
                   </div>
                 </div>
               </div>
 
-              {submitError && <div className="p-4 bg-red-50 text-red-600 rounded-lg text-xs font-bold font-sans tracking-wide text-center uppercase">{submitError}</div>}
+
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-neutral-900 text-white rounded-lg py-5 font-sans font-bold text-[13px] uppercase tracking-[0.3em] hover:bg-neutral-800 transition-all active:scale-[0.985] disabled:opacity-50"
+                className={`w-full rounded-md py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-3
+                  ${paymentStatus === "processing" ? "bg-accent/10 text-accent border border-accent/20" : "bg-neutral-900 text-white hover:bg-neutral-800"}
+                `}
               >
-                {isSubmitting ? "Orchestrating Order..." : "Complete Order"}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    {paymentStatus === "processing" ? "Waiting for Razorpay..." : "Processing..."}
+                  </>
+                ) : (
+                  paymentStatus === "failed" ? "Retry Payment" : "Complete Order"
+                )}
               </button>
             </form>
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-28 bg-white border border-neutral-100/60 rounded-3xl p-8 md:p-12 space-y-12 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-              <h3 className="font-serif text-[28px] text-neutral-900">Order Summary</h3>
+            <div className="lg:sticky lg:top-24 bg-white border border-neutral-100/50 rounded-xl p-6 md:p-8 space-y-8 shadow-sm">
+              <p className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400">Order Summary</p>
               
-              <div className="space-y-9 max-h-[450px] overflow-y-auto pr-3 custom-scrollbar">
+              <div className="space-y-6 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex gap-6 items-start">
-                    <div className="w-18 h-22 relative bg-neutral-50 rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100/50">
+                  <div key={item.id} className="flex gap-4 items-start pb-6 border-b border-neutral-50 last:border-0 last:pb-0">
+                    <div className="w-14 h-18 relative bg-neutral-50 rounded-md overflow-hidden flex-shrink-0 border border-neutral-100">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
-                    <div className="flex-grow flex justify-between gap-4">
-                      <div className="space-y-1.5">
-                        <p className="font-serif text-xl text-neutral-800 leading-tight line-clamp-2">{item.name}</p>
-                        <p className="text-[10px] font-sans font-black text-neutral-400 uppercase tracking-[0.2em]">QTY: {item.quantity}</p>
+                    <div className="flex-grow flex justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-serif text-lg text-neutral-800 leading-none truncate">{item.name}</p>
+                        <p className="text-[9px] font-sans font-black text-neutral-300 uppercase tracking-widest mt-1.5">QTY: {item.quantity}</p>
                       </div>
                       <div className="text-right flex flex-col items-end shrink-0">
-                        <span className="font-serif text-[12px] text-neutral-500 leading-none mb-0.5">₹</span>
-                        <span className="font-serif text-2xl text-neutral-900 leading-none">
+                        <span className="font-serif text-[11px] text-neutral-400 leading-none mb-1">₹</span>
+                        <span className="font-serif text-xl text-neutral-900 leading-none tracking-tight">
                           {item.price.toLocaleString()}
                         </span>
                       </div>
@@ -479,21 +701,62 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="space-y-6 pt-9 border-t border-neutral-100">
-                <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">Subtotal</span>
-                  <span className="font-sans font-bold text-neutral-900">₹{cartTotal.toLocaleString()}</span>
+              <div className="space-y-4 pt-1 border-t border-neutral-50">
+                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
+                  <span>Subtotal</span>
+                  <span className="text-neutral-900">₹{cartTotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-sans font-black uppercase tracking-[0.2em] text-neutral-400/80">Shipping</span>
-                  <span className="text-secondary font-sans font-black text-[11px] uppercase tracking-widest border-b-2 border-secondary/10 pb-0.5">Free</span>
+                <div className="space-y-2">
+                  <div 
+                    className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400 group cursor-pointer" 
+                    onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}
+                  >
+                    <div className="flex items-center gap-1.5 transition-colors group-hover:text-neutral-600">
+                      <span>GST (18%)</span>
+                      <svg 
+                        className={`w-2.5 h-2.5 transition-transform duration-300 ${showTaxBreakdown ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    <span className="text-neutral-900">₹{taxAmount.toLocaleString()}</span>
+                  </div>
+                  
+                  {showTaxBreakdown && (
+                    <div className="pl-4 space-y-1.5 border-l border-neutral-100 my-2">
+                      {isRajasthan ? (
+                        <>
+                          <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                            <span>CGST (9%) - Code 08</span>
+                            <span>₹{cgst.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                            <span>SGST (9%) - Code 08</span>
+                            <span>₹{sgst.toLocaleString()}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between text-[9px] font-sans text-neutral-400 italic tracking-wider">
+                          <span>IGST (18%) {userStateCode ? `- Code ${userStateCode}` : ''}</span>
+                          <span>₹{igst.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between items-end pt-9 border-t border-neutral-100">
-                  <span className="font-serif text-[26px] text-neutral-800">Total</span>
-                  <div className="flex items-end leading-none translate-y-1">
-                    <span className="font-serif text-2xl text-neutral-400 leading-none mb-1 mr-0.5 font-light">₹</span>
-                    <span className="font-serif text-[44px] text-neutral-900 tracking-tighter leading-none">
-                      {cartTotal.toLocaleString()}
+                <div className="flex justify-between items-center text-[10px] font-sans font-bold uppercase tracking-[0.1em] text-neutral-400">
+                  <span>Shipping</span>
+                  <span className="text-secondary tracking-widest">Free</span>
+                </div>
+                <div className="flex justify-between items-end pt-6 border-t border-neutral-200">
+                  <span className="font-serif text-2xl text-neutral-800">Total</span>
+                  <div className="flex items-end gap-1 leading-none">
+                    <span className="font-serif text-lg text-neutral-400 mb-0.5">₹</span>
+                    <span className="font-serif text-4xl text-neutral-900 tracking-tighter">
+                      {grandTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -504,6 +767,10 @@ export default function CheckoutPage() {
       </main>
 
       <Footer />
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

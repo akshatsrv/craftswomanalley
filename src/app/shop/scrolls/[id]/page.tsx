@@ -22,9 +22,12 @@ export default function ScrollDetailPage({ params }: { params: Promise<{ id: str
 
   const handleAddToCart = () => {
     addToCart({
-      ...item,
+      id: item.id,
+      name: item.name,
+      price: typeof item.price === "number" ? `₹${item.price.toLocaleString()}` : item.price,
+      image: item.image,
       quantity: 1,
-      personalization: personalization
+      personalization: personalization,
     });
   };
 

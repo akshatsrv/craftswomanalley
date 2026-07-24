@@ -3,14 +3,11 @@
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
-
-const candles = [
-  { id: "candle-1", name: "The Scented Botanical Jar", price: "₹649", image: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg" },
-  { id: "candle-2", name: "Sculptural Bubble Candle", price: "₹499", image: "https://i.pinimg.com/736x/0e/42/df/0e42dfcd98872d01d9f71b0e410feb93.jpg" },
-  { id: "candle-3", name: "Lavender Soul Jar", price: "₹749", image: "https://i.pinimg.com/736x/61/ed/7d/61ed7d05f3f7056d07a484790b897b86.jpg" },
-];
+import { products } from "@/data/products";
 
 export default function CandlesPage() {
+  const candles = Object.values(products).filter(p => p.category.toLowerCase().includes("candle"));
+
   return (
     <div className="min-h-screen flex flex-col noise-bg">
       <Navigation />
