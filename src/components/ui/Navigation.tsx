@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { LogoMark } from "@/components/ui/LogoMark";
 import { useCart } from "@/context/CartContext";
 import { products, Product } from "@/data/products";
 
@@ -48,15 +49,7 @@ export function Navigation() {
 
           {/* LEFT: Logo */}
           <Link href="/" className="flex items-center hover:opacity-90 transition-opacity flex-shrink-0 group">
-            <Image 
-              src="/images/logo-transparent.png" 
-              alt="Craftswoman Alley" 
-              width={200} 
-              height={90} 
-              className="h-8 sm:h-9 md:h-10 lg:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-              priority
-              unoptimized
-            />
+            <LogoMark className="h-8 sm:h-9 md:h-10 lg:h-11 w-auto transition-transform duration-300 group-hover:scale-105" />
           </Link>
 
           {/* CENTER: Filter Nav Links — always visible, no scroll */}

@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { LogoMark } from "@/components/ui/LogoMark";
 
 export const Footer = () => {
   return (
@@ -8,14 +8,7 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
         <div className="space-y-6">
           <Link href="/" className="inline-block hover:opacity-90 transition-opacity">
-            <Image 
-              src="/images/logo-transparent.png" 
-              alt="Craftswoman Alley Logo" 
-              width={220} 
-              height={99} 
-              className="h-12 md:h-14 lg:h-15 w-auto object-contain"
-              unoptimized
-            />
+            <LogoMark className="h-12 md:h-14 lg:h-15 w-auto" />
           </Link>
           <p className="text-sm font-sans text-foreground/50 leading-relaxed font-medium">
             Elevated craft for the physical soul. Hand-picked and heart-made treasures from our alley to yours.
