@@ -44,7 +44,7 @@ export default function Home() {
             <div className="lg:col-span-8 relative rounded-[2rem] overflow-hidden group">
               <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[3000ms] group-hover:scale-105"
-                style={{ backgroundImage: `url('/images/hero_scroll.png')` }}
+                style={{ backgroundImage: `url('/images/products/B0G4H47NVJ/img_1.jpg')` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               <div className="absolute inset-0 p-10 flex flex-col justify-end text-white">
