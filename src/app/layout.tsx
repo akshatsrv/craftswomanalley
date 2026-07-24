@@ -36,9 +36,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <head>
         {/* Preload hero and critical above-the-fold images */}
-        <link rel="preload" as="image" href="/images/hero_scroll.png" />
+        <link rel="preload" as="image" href="/images/products/B0G4H47NVJ/img_1.jpg" />
         <link rel="preload" as="image" href="/images/products/B0H2HGTNSM/img_1.jpg" />
-        <link rel="preload" as="image" href="/images/scroll_stitched_real.jpg" />
+        <link rel="preload" as="image" href="/images/personalised-journal/journal_cover.jpg" />
         {/* Preconnect to external image CDNs for faster DNS + TLS */}
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://i.pinimg.com" />
